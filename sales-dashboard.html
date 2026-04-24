@@ -6,6 +6,53 @@
 <title>AICUT 영업 대시보드</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, setDoc, doc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC27z0wVhH9KSle2RpJwj5UufHLtjXiVDs",
+  authDomain: "aicut-sales-dashboard.firebaseapp.com",
+  projectId: "aicut-sales-dashboard",
+  storageBucket: "aicut-sales-dashboard.firebasestorage.app",
+  messagingSenderId: "328052178550",
+  appId: "1:328052178550:web:14001b61eba37af3bf2957"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const fsDB  = getFirestore(fbApp);
+const FCOL  = 'companies';
+
+window.fsSave = async function(data) {
+  try {
+    const batch = writeBatch(fsDB);
+    data.forEach(d => batch.set(doc(fsDB, FCOL, String(d.id)), d));
+    await batch.commit();
+  } catch(e) { console.error('저장 오류:', e); }
+};
+
+window.fsLoad = async function() {
+  try {
+    const snap = await getDocs(collection(fsDB, FCOL));
+    const data = []; snap.forEach(d => data.push(d.data()));
+    return data.sort((a,b)=>a.id-b.id);
+  } catch(e) { console.error('로드 오류:', e); return []; }
+};
+
+window.fsUpdate = async function(id, fields) {
+  try { await setDoc(doc(fsDB, FCOL, String(id)), fields, {merge:true}); }
+  catch(e) { console.error('업데이트 오류:', e); }
+};
+
+window.fsListen = function(cb) {
+  return onSnapshot(collection(fsDB, FCOL), snap => {
+    const data = []; snap.forEach(d => data.push(d.data()));
+    cb(data.sort((a,b)=>a.id-b.id));
+  });
+};
+
+window.dispatchEvent(new CustomEvent('firebase-ready'));
+</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
   :root {
@@ -539,13 +586,37 @@ function naStatus(s){
   return {label:`D-${diff}`,cls:'na-future'};
 }
 
-// ── SAVE / LOAD ──
-function save(){ try{localStorage.setItem('aicut_v3',JSON.stringify(DB));}catch(e){} }
-function load(){
-  try{
-    const s=localStorage.getItem('aicut_v3');
-    if(s){ DB=JSON.parse(s); updateAll(); if(DB.length)document.getElementById('upzone').style.display='none'; }
-  }catch(e){}
+// ── SAVE / LOAD (Firestore 우선, localStorage 폴백) ──
+async function save(){
+  localStorage.setItem('aicut_v3', JSON.stringify(DB)); // 폴백
+  if(window.fsSave) await window.fsSave(DB);
+}
+
+async function load(){
+  // Firebase 준비될 때까지 대기 (최대 4초)
+  if(!window.fsLoad){
+    await new Promise(resolve=>{
+      const t = setTimeout(()=>resolve(), 4000);
+      window.addEventListener('firebase-ready', ()=>{ clearTimeout(t); resolve(); }, {once:true});
+    });
+  }
+  try {
+    let data = window.fsLoad ? await window.fsLoad() : [];
+    if(!data.length){
+      // Firestore 비어있으면 localStorage 확인
+      const s = localStorage.getItem('aicut_v3');
+      if(s) data = JSON.parse(s);
+    }
+    if(data.length){
+      DB = data;
+      updateAll();
+      document.getElementById('upzone').style.display='none';
+      // Firestore 실시간 동기화 시작
+      if(window.fsListen) window.fsListen(remote=>{
+        DB = remote; updateAll();
+      });
+    }
+  } catch(e){ console.error('로드 실패:', e); }
 }
 
 // ── UPDATE ALL ──
@@ -688,9 +759,21 @@ function renderTbl(data){
 function eh(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function upStage(id,val){
   const i=DB.findIndex(d=>d.id===id);
-  if(i>=0){ DB[i].stage=val; DB[i].date=new Date().toLocaleDateString('ko-KR'); save(); updateAll(); }
+  if(i>=0){
+    DB[i].stage=val;
+    DB[i].date=new Date().toLocaleDateString('ko-KR');
+    save();
+    updateAll();
+  }
 }
-function upMemo(id,val){ const i=DB.findIndex(d=>d.id===id); if(i>=0){DB[i].memo=val;save();} }
+function upMemo(id,val){
+  const i=DB.findIndex(d=>d.id===id);
+  if(i>=0){
+    DB[i].memo=val;
+    if(window.fsUpdate) window.fsUpdate(id, {memo:val});
+    else save();
+  }
+}
 
 // ── OVERDUE ALERT ──
 function updAlert(){
@@ -794,7 +877,7 @@ function toast(msg,type=''){
 // ── INIT ──
 Chart.defaults.color='#4B4873';
 Chart.defaults.font.family='Pretendard';
-load();
+load(); // async — Firebase 준비 후 자동 실행
 </script>
 </body>
 </html>
