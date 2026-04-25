@@ -1,10 +1,10 @@
 {
-  "name": "aicut-collector",
+  "name": "aicut-daily-collect",
   "version": "1.0.0",
-  "type": "module",
+  "description": "AICUT 신규 기업 자동 수집",
+  "main": "collect.js",
   "dependencies": {
-    "node-fetch": "^3.3.2",
-    "cheerio": "^1.0.0",
-    "firebase-admin": "^12.0.0"
+    "node-fetch": "^2.6.9",
+    "firebase-admin": "^11.0.0"
   }
 }
