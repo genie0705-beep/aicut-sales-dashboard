@@ -2,8 +2,8 @@ name: 🎯 AICUT 신규 기업 자동 수집
 
 on:
   schedule:
-    - cron: '0 0 * * *'   # 매일 UTC 00:00 = KST 09:00
-  workflow_dispatch:        # 수동 실행 가능
+    - cron: '0 0 * * 1-5'   # 평일 매일 UTC 00:00 = KST 09:00
+  workflow_dispatch:          # GitHub UI에서 수동 실행 가능
 
 jobs:
   collect:
@@ -11,26 +11,26 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: 📥 체크아웃
+      - name: 📥 코드 체크아웃
         uses: actions/checkout@v4
 
-      - name: 🟢 Node.js 설정
+      - name: 🟢 Node.js 20 설정
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - name: 📦 의존성 설치
+      - name: 📦 패키지 설치
         run: |
-          npm init -y
-          npm install node-fetch@3 firebase-admin cheerio
+          cd .github/scripts
+          npm install
 
-      - name: 🔍 신규 기업 수집 → Firebase 저장
+      - name: 🔍 신규 기업 수집 및 Firebase 저장
         env:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
           FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
         run: node .github/scripts/collect.js
 
-      - name: ✅ 완료
-        run: echo "완료 $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M KST')"
+      - name: ✅ 실행 완료 시간 기록
+        run: |
+          echo "완료: $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S KST')"
