@@ -848,11 +848,22 @@ function selectCard(id) {
   const d = DB.find(x => x.id === id);
   if (!d || d.done || !d.hasEmail) return;
 
+  // 이전 선택 카드 테두리 제거
+  if (selectedId !== null) {
+    const prevCard = document.getElementById('card-' + selectedId);
+    if (prevCard) prevCard.classList.remove('selected');
+  }
+
   selectedId = id;
-  renderCards(); // re-highlight
+
+  // 새 선택 카드 하이라이트
+  const newCard = document.getElementById('card-' + id);
+  if (newCard) newCard.classList.add('selected');
+
+  // 오른쪽 패널 렌더
   renderMailPanel(d);
 
-  // save bookmark
+  // 북마크 저장
   const globalNum = DB.indexOf(d) + 1;
   saveBookmark(d.company, globalNum);
   showBookmark(d.company, globalNum);
@@ -875,25 +886,21 @@ function renderMailPanel(d) {
       </div>
 
       <label class="panel-label">템플릿 선택</label>
-      <select class="tmpl-select" id="tmplSelect" onchange="onTmplChange('${esc(d.company)}')">
+      <select class="tmpl-select" id="tmplSelect">
         ${tmplOptions}
       </select>
 
       <label class="panel-label">제목</label>
       <div class="subject-row">
         <input class="subject-input" id="subjInput" type="text" value="${esc(subj)}">
-        <button class="copy-btn" onclick="copySubject()" id="copySubjBtn">
-          📋 제목 복사
-        </button>
+        <button class="copy-btn" id="copySubjBtn">📋 제목 복사</button>
       </div>
 
       <label class="panel-label">본문</label>
       <div class="body-wrap">
         <textarea class="body-textarea" id="bodyInput">${esc(body)}</textarea>
       </div>
-      <button class="copy-btn copy-btn-full" onclick="copyBody()" id="copyBodyBtn">
-        📋 본문 복사
-      </button>
+      <button class="copy-btn copy-btn-full" id="copyBodyBtn">📋 본문 복사</button>
 
       <div style="margin-top:16px">
         <label class="panel-label">이메일 수신자</label>
@@ -912,14 +919,23 @@ function renderMailPanel(d) {
       </div>
     </div>
   `;
-}
 
-function onTmplChange(company) {
-  const key = g('tmplSelect').value;
-  const t = TEMPLATES[key];
-  if (!t) return;
-  g('subjInput').value = t.subject(company);
-  g('bodyInput').value = t.body(company);
+  // 이벤트 리스너를 DOM 생성 후 안전하게 연결 (회사명 특수문자 문제 없음)
+  g('tmplSelect').addEventListener('change', function() {
+    const key = this.value;
+    const t = TEMPLATES[key];
+    if (!t) return;
+    g('subjInput').value = t.subject(d.company);
+    g('bodyInput').value = t.body(d.company);
+  });
+
+  g('copySubjBtn').addEventListener('click', function() {
+    copyText(g('subjInput').value, 'copySubjBtn', '📋 제목 복사');
+  });
+
+  g('copyBodyBtn').addEventListener('click', function() {
+    copyText(g('bodyInput').value, 'copyBodyBtn', '📋 본문 복사');
+  });
 }
 
 // ══════════════════════════════════
