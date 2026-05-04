@@ -3,1673 +3,1071 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AICUT 영업 대시보드</title>
+<title>AICUT 영업 대시보드 v2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, setDoc, doc, onSnapshot, writeBatch, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-const FC={apiKey:"AIzaSyC27z0wVhH9KSle2RpJwj5UufHLtjXiVDs",authDomain:"aicut-sales-dashboard.firebaseapp.com",projectId:"aicut-sales-dashboard",storageBucket:"aicut-sales-dashboard.firebasestorage.app",messagingSenderId:"328052178550",appId:"1:328052178550:web:14001b61eba37af3bf2957"};
-const fa=initializeApp(FC),fd=getFirestore(fa),COL='companies';
-window.fsSave=async d=>{try{const b=writeBatch(fd);d.forEach(x=>b.set(doc(fd,COL,String(x.id)),x));await b.commit();}catch(e){console.error(e);}};
-window.fsLoad=async()=>{try{const s=await getDocs(collection(fd,COL));const r=[];s.forEach(d=>r.push(d.data()));return r.sort((a,b)=>a.id-b.id);}catch(e){return[];}};
-window.fsUpdate=async(id,f)=>{try{await setDoc(doc(fd,COL,String(id)),f,{merge:true});}catch(e){console.error(e);}};
-window.fsActivityLog=async(id,action,note='')=>{
-  try{
-    await setDoc(doc(fd,COL,String(id)),{
-      salesStage:action, lastContactDate:new Date().toLocaleDateString('ko-KR'),
-      activityLog:arrayUnion({action,date:new Date().toLocaleDateString('ko-KR'),note})
-    },{merge:true});
-  }catch(e){console.error(e);}
-};
-window.fsListen=cb=>onSnapshot(collection(fd,COL),s=>{const r=[];s.forEach(d=>r.push(d.data()));cb(r.sort((a,b)=>a.id-b.id));});
-window.dispatchEvent(new CustomEvent('firebase-ready'));
-</script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
-:root{
-  --bg:#F4F5F9;--card:#FFF;--c2:#F0F1F7;
-  --bd:rgba(92,61,232,.12);--bdg:rgba(92,61,232,.3);
-  --ac:#5C3DE8;--ac2:#4527C8;--ac3:#7C3AED;
-  --t1:#1A1535;--t2:#4B4873;--t3:#9592B0;
-  --ok:#059669;--warn:#D97706;--err:#DC2626;--info:#2563EB;
-  --r:14px;--rs:8px;
-}
+@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=Space+Mono:wght@700&display=swap');
+
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 600px 400px at 10% 20%,rgba(92,61,232,.05) 0%,transparent 70%),radial-gradient(ellipse 400px 300px at 90% 80%,rgba(124,58,237,.04) 0%,transparent 70%);pointer-events:none;z-index:0}
-.wrap{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh}
+:root{
+  --bg:#f4f5f8;
+  --card:#fff;
+  --border:#e8e8f0;
+  --purple:#6c63ff;
+  --purple-light:#f0efff;
+  --purple-dark:#5a52d5;
+  --high:#ef4444;
+  --high-bg:#fff1f1;
+  --mid:#f59e0b;
+  --mid-bg:#fffbeb;
+  --text:#1a1a2e;
+  --text2:#555570;
+  --text3:#9898b0;
+  --done-bg:#f8f8fb;
+  --done-text:#b0b0c8;
+  --green:#10b981;
+}
+
+body{
+  font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  font-size:14px;
+}
 
 /* ── HEADER ── */
-.hd{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--bd);background:rgba(255,255,255,.94);backdrop-filter:blur(20px);position:sticky;top:0;z-index:200;gap:10px;flex-wrap:wrap}
-.logo{display:flex;align-items:center;gap:9px;flex-shrink:0}
-.logo-ic{width:32px;height:32px;background:linear-gradient(135deg,var(--ac2),var(--ac));border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#fff;letter-spacing:-1px}
-.logo-tx{font-size:14px;font-weight:700}.logo-tx em{color:var(--ac2);font-style:normal}
-.tabs{display:flex;gap:2px;background:var(--c2);border:1px solid var(--bd);border-radius:9px;padding:3px}
-.tb{padding:5px 13px;border:none;background:none;color:var(--t2);font-family:'Pretendard',sans-serif;font-size:12px;font-weight:500;border-radius:7px;cursor:pointer;transition:.2s;white-space:nowrap}
-.tb.on{background:linear-gradient(135deg,var(--ac2),var(--ac3));color:#fff;font-weight:600}
-.tb:hover:not(.on){color:var(--ac);background:rgba(92,61,232,.07)}
-.hdr{display:flex;align-items:center;gap:7px;flex-shrink:0;flex-wrap:wrap}
-.ab{display:none;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;font-size:11px;font-weight:600;cursor:pointer}
-.ab.show{display:inline-flex}
-.ghost{display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--t2);font-family:'Pretendard',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:.2s}
-.ghost:hover{border-color:var(--ac);color:var(--ac)}
-.ghost svg{width:13px;height:13px}
-.upbtn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:linear-gradient(135deg,var(--ac2),var(--ac));border:none;border-radius:8px;color:#fff;font-family:'Pretendard',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;box-shadow:0 2px 10px rgba(92,61,232,.25)}
-.upbtn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(92,61,232,.35)}
-.upbtn svg{width:13px;height:13px}
-.crawl-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:linear-gradient(135deg,#065F46,#059669);border:none;border-radius:8px;color:#fff;font-family:'Pretendard',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;box-shadow:0 2px 10px rgba(5,150,105,.25)}
-.crawl-btn:hover{transform:translateY(-1px)}.crawl-btn:disabled,.upbtn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.crawl-btn svg{width:13px;height:13px}
-.collect-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:linear-gradient(135deg,#7C2D92,#A855F7);border:none;border-radius:8px;color:#fff;font-family:'Pretendard',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;box-shadow:0 2px 10px rgba(124,45,146,.25)}
-.collect-btn:hover{transform:translateY(-1px)}.collect-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.collect-btn svg{width:13px;height:13px}
-#fi{display:none}
+.header{
+  background:#fff;
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;
+  top:0;
+  z-index:100;
+  gap:16px;
+}
+.logo{
+  display:flex;align-items:center;gap:9px;flex-shrink:0;
+}
+.logo-mark{
+  width:32px;height:32px;
+  background:linear-gradient(135deg,#5a52d5,#6c63ff);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Mono',monospace;
+  font-size:10px;font-weight:700;color:#fff;letter-spacing:-0.5px;
+}
+.logo-text{font-size:15px;font-weight:700;color:var(--text)}
+.logo-text em{color:var(--purple);font-style:normal}
 
-/* ── MAIN ── */
-.main{flex:1;padding:20px 24px}
-.pane{display:none}.pane.on{display:block}
-.sec{font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);margin-bottom:11px;display:flex;align-items:center;gap:7px}
-.sec::before{content:'';display:inline-block;width:3px;height:12px;background:linear-gradient(to bottom,var(--ac),var(--ac2));border-radius:2px}
+.header-stats{
+  display:flex;align-items:center;gap:6px;
+  background:var(--bg);
+  border-radius:10px;
+  padding:6px 12px;
+  border:1px solid var(--border);
+}
+.stat-item{
+  display:flex;align-items:center;gap:5px;
+  font-size:12px;font-weight:500;color:var(--text2);
+  padding:0 10px;
+}
+.stat-item:not(:last-child){border-right:1px solid var(--border)}
+.stat-val{
+  font-family:'Space Mono',monospace;
+  font-size:13px;font-weight:700;color:var(--purple);
+}
 
-/* ── CRAWL BAR ── */
-.crawl-bar{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;display:none}
-.crawl-bar.show{display:block}
-.crawl-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.crawl-title{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
-.crawl-stat{font-size:11px;color:var(--t3)}
-.progress-track{background:var(--c2);border-radius:4px;height:7px;overflow:hidden;margin-bottom:7px}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--ac2),var(--ac));border-radius:4px;transition:width .4s ease}
-.crawl-log{font-size:10px;color:var(--t3);max-height:70px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
-.log-item{padding:1px 0;display:flex;align-items:center;gap:4px}
-.log-ok{color:var(--ok)}.log-err{color:var(--err)}.log-ing{color:var(--warn)}
+.upload-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 16px;
+  background:var(--purple);
+  color:#fff;
+  border:none;border-radius:9px;
+  font-family:'Pretendard',sans-serif;
+  font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .2s;
+  flex-shrink:0;
+  box-shadow:0 2px 8px rgba(108,99,255,.3);
+}
+.upload-btn:hover{background:var(--purple-dark);transform:translateY(-1px);box-shadow:0 4px 14px rgba(108,99,255,.4)}
+.upload-btn svg{width:14px;height:14px}
+#fileInput{display:none}
 
-/* ── COLLECT RESULT ── */
-.collect-result{display:none;background:linear-gradient(135deg,rgba(124,45,146,.07),rgba(168,85,247,.04));border:1px solid rgba(168,85,247,.2);border-radius:var(--r);padding:14px 17px;margin-bottom:14px}
+/* ── LAYOUT ── */
+.layout{
+  display:grid;
+  grid-template-columns:60% 40%;
+  height:calc(100vh - 58px);
+  overflow:hidden;
+}
 
-/* ── TODAY CARD ── */
-.today-card{background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--ac);border-radius:var(--r);padding:14px 17px;margin-bottom:14px}
-.today-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
-.today-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
-.today-cnt{font-family:'Space Mono',monospace;font-size:10px;color:var(--ac);background:rgba(92,61,232,.08);padding:2px 7px;border-radius:20px}
-.today-list{display:flex;flex-wrap:wrap;gap:6px}
-.ti{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:7px;border:1px solid var(--bd);background:var(--c2);cursor:pointer;transition:.2s;font-size:11px}
-.ti:hover{border-color:var(--ac);background:rgba(92,61,232,.04)}
-.ti-nm{font-weight:600}.ti-tag{font-size:10px;font-weight:600;padding:2px 5px;border-radius:4px}
-.tag-high{background:#FEF2F2;color:#DC2626}
-.tag-mid{background:#FEF3C7;color:#D97706}
-.tag-today{background:#EEF2FF;color:#4338CA}
-.tag-close{background:#ECFDF5;color:#059669}
+/* ── LEFT PANEL ── */
+.left-panel{
+  display:flex;flex-direction:column;
+  border-right:1px solid var(--border);
+  overflow:hidden;
+  background:var(--bg);
+}
 
-/* ── WEEKLY GOAL CARD ── */
-.goal-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:16px 18px;margin-bottom:14px}
-.goal-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px}
-.goal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.goal-item{display:flex;flex-direction:column;gap:5px}
-.goal-label{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px}
-.goal-inp-row{display:flex;align-items:center;gap:7px}
-.goal-inp{width:52px;padding:5px 8px;border:1px solid var(--bd);border-radius:6px;background:var(--c2);color:var(--t1);font-family:'Space Mono',monospace;font-size:13px;font-weight:700;text-align:center;outline:none}
-.goal-inp:focus{border-color:var(--ac)}
-.goal-current{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--ac)}
-.goal-track{background:var(--c2);border-radius:4px;height:7px;overflow:hidden;margin-top:3px}
-.goal-fill{height:100%;border-radius:4px;transition:width .5s ease}
+/* bookmark bar */
+.bookmark-bar{
+  background:linear-gradient(90deg,#6c63ff08,transparent);
+  border-bottom:1px solid var(--border);
+  padding:8px 18px;
+  font-size:12px;color:var(--text2);
+  display:flex;align-items:center;gap:6px;
+  min-height:36px;
+}
+.bookmark-bar.hidden{display:none}
+.bookmark-name{font-weight:600;color:var(--purple)}
+.bookmark-clear{
+  margin-left:auto;font-size:11px;color:var(--text3);
+  cursor:pointer;text-decoration:underline;
+}
+.bookmark-clear:hover{color:var(--purple)}
 
-/* ── ACTIVITY LOG ── */
-.act-list{display:flex;flex-direction:column;gap:0}
-.act-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd);font-size:11px}
-.act-item:last-child{border-bottom:none}
-.act-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.act-time{font-family:'Space Mono',monospace;font-size:10px;color:var(--t3);flex-shrink:0}
+/* tabs */
+.tab-bar{
+  display:flex;align-items:center;gap:0;
+  background:#fff;
+  border-bottom:2px solid var(--border);
+  padding:0 14px;
+  overflow-x:auto;
+  flex-shrink:0;
+}
+.tab-bar::-webkit-scrollbar{height:0}
+.tab-btn{
+  padding:11px 14px;
+  border:none;background:none;
+  font-family:'Pretendard',sans-serif;
+  font-size:12px;font-weight:500;color:var(--text3);
+  cursor:pointer;transition:all .15s;
+  border-bottom:2px solid transparent;
+  margin-bottom:-2px;
+  white-space:nowrap;
+}
+.tab-btn.on{color:var(--purple);font-weight:700;border-bottom-color:var(--purple)}
+.tab-btn:hover:not(.on){color:var(--text2)}
+.tab-cnt{
+  font-size:10px;background:var(--border);color:var(--text3);
+  padding:1px 5px;border-radius:10px;margin-left:3px;
+}
+.tab-btn.on .tab-cnt{background:var(--purple-light);color:var(--purple)}
 
-/* ── KPI ── */
-.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:11px}
-.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:18px}
-.kc{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden;transition:.25s}
-.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ca,linear-gradient(90deg,var(--ac2),var(--ac)))}
-.kc:hover{border-color:var(--bdg);transform:translateY(-2px);box-shadow:0 5px 16px rgba(92,61,232,.08)}
-.kl{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}
-.kv{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;line-height:1;margin-bottom:3px}
-.ks{font-size:10px;color:var(--t3)}
-.ki{position:absolute;bottom:9px;right:11px;font-size:20px;opacity:.1}
+/* card list */
+.card-list{
+  flex:1;overflow-y:auto;
+  padding:12px 14px;
+  display:flex;flex-direction:column;gap:7px;
+}
+.card-list::-webkit-scrollbar{width:5px}
+.card-list::-webkit-scrollbar-thumb{background:rgba(108,99,255,.18);border-radius:3px}
 
-/* ── CHARTS ── */
-.cg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
-.cg2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
-.cc{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:16px}
-.ct{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:12px;display:flex;align-items:center;gap:5px}
-.ct::before{content:'';width:6px;height:6px;background:var(--ac);border-radius:50%}
-.ch{position:relative;height:170px}
-.fn-rows{display:flex;flex-direction:column;gap:6px;padding-top:3px}
-.fn-row{display:flex;align-items:center;gap:8px}
-.fn-lbl{font-size:11px;color:var(--t2);width:52px;flex-shrink:0}
-.fn-wrap{flex:1;background:var(--c2);border-radius:4px;overflow:hidden;height:19px}
-.fn-bar{height:100%;border-radius:4px;transition:width .6s;display:flex;align-items:center;padding-left:6px}
-.fn-bar span{font-size:10px;font-weight:700;color:#fff;white-space:nowrap}
-.fn-pct{font-family:'Space Mono',monospace;font-size:10px;color:var(--t3);width:30px;text-align:right;flex-shrink:0}
-.ql-rows{display:flex;flex-direction:column;gap:9px;padding-top:3px}
-.ql-row{display:flex;flex-direction:column;gap:3px}
-.ql-meta{display:flex;justify-content:space-between}
-.ql-name{font-size:11px;color:var(--t2)}
-.ql-val{font-size:11px;font-weight:600;font-family:'Space Mono',monospace}
-.ql-track{background:var(--c2);border-radius:3px;height:6px;overflow:hidden}
-.ql-fill{height:100%;border-radius:3px;transition:width .6s}
+/* empty state */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;padding:40px 20px;text-align:center;
+}
+.empty-state .ic{font-size:48px;margin-bottom:14px;opacity:.35}
+.empty-state h3{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.empty-state p{font-size:12px;color:var(--text3);line-height:1.6}
 
-/* ── INDUSTRY FILTER CHIPS ── */
-.ind-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.ind-chip{padding:4px 10px;border-radius:20px;border:1px solid var(--bd);background:var(--card);color:var(--t2);font-size:11px;font-weight:500;cursor:pointer;transition:.2s;white-space:nowrap}
-.ind-chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
-.ind-chip:hover:not(.on){border-color:var(--ac);color:var(--ac)}
+/* ── COMPANY CARD ── */
+.company-card{
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:11px;
+  padding:12px 14px;
+  cursor:pointer;
+  transition:all .18s;
+  display:flex;align-items:center;gap:10px;
+  position:relative;
+}
+.company-card:hover:not(.done):not(.no-email){
+  border-color:rgba(108,99,255,.4);
+  box-shadow:0 2px 12px rgba(108,99,255,.1);
+}
+.company-card.selected{
+  border-color:var(--purple);
+  box-shadow:0 2px 14px rgba(108,99,255,.2);
+  background:#fdfcff;
+}
+.company-card.done{
+  background:var(--done-bg);
+  border-color:#e8e8f0;
+  opacity:.7;
+  cursor:default;
+}
+.company-card.no-email{
+  opacity:.45;cursor:default;
+}
 
-/* ── COMPANY CARDS ── */
-.card-filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.cf-btn{display:flex;align-items:center;gap:5px;padding:7px 15px;border-radius:9px;border:1px solid var(--bd);background:var(--card);color:var(--t2);font-family:'Pretendard',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:.2s;white-space:nowrap}
-.cf-btn.on{background:linear-gradient(135deg,var(--ac2),var(--ac3));color:#fff;border-color:transparent;font-weight:700;box-shadow:0 2px 10px rgba(92,61,232,.25)}
-.cf-btn.high.on{background:linear-gradient(135deg,#B91C1C,#EF4444);box-shadow:0 2px 10px rgba(185,28,28,.25)}
-.cf-btn.mid.on{background:linear-gradient(135deg,#92400E,#D97706);box-shadow:0 2px 10px rgba(217,119,6,.2)}
-.cf-cnt{font-family:'Space Mono',monospace;font-size:11px;opacity:.8}
-.card-srch{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 11px;flex:1;min-width:160px}
-.card-srch input{background:none;border:none;outline:none;color:var(--t1);font-family:'Pretendard',sans-serif;font-size:12px;width:100%}
-.card-srch input::placeholder{color:var(--t3)}
+.card-num{
+  font-family:'Space Mono',monospace;
+  font-size:11px;font-weight:700;
+  color:var(--text3);
+  width:22px;text-align:center;flex-shrink:0;
+}
+.company-card.selected .card-num{color:var(--purple)}
 
-.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:13px}
-
-.company-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:15px 16px;border-left:4px solid #E5E7EB;transition:.25s;cursor:default;position:relative}
-.company-card:hover{box-shadow:0 4px 18px rgba(92,61,232,.1);transform:translateY(-2px)}
-.company-card.high{border-left-color:#DC2626}
-.company-card.mid{border-left-color:#D97706}
-.company-card.done{border-left-color:#059669}
-.company-card.hl{box-shadow:0 0 0 2px var(--ac),0 4px 18px rgba(92,61,232,.15)!important}
-
-.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px}
-.card-badges{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.card-name{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card-summary{font-size:11px;color:var(--t2);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.card-email-row{display:flex;align-items:center;gap:5px;font-size:11px;margin-bottom:10px}
-.email-ok{color:var(--ok);font-weight:600}
-.email-no{color:var(--err);font-weight:600}
-.card-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-
-.card-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:7px;border:1px solid var(--bd);background:var(--c2);color:var(--t2);font-family:'Pretendard',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:.2s;white-space:nowrap}
-.card-btn:hover{border-color:var(--ac);color:var(--ac)}
-.card-btn.primary{background:linear-gradient(135deg,var(--ac2),var(--ac));color:#fff;border:none;font-weight:600}
-.card-btn.primary:hover{opacity:.9}
-.card-btn.copy-ok{background:#ECFDF5;color:#059669;border-color:rgba(5,150,105,.3)}
-
-.card-stage{margin-left:auto}
-.ss-sel{background:transparent;border:none;color:inherit;font-size:11px;font-weight:600;outline:none;cursor:pointer;padding:0 2px;font-family:'Pretendard',sans-serif}
+.card-body{flex:1;min-width:0}
+.card-top{display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap}
+.card-name{
+  font-size:13px;font-weight:700;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.company-card.done .card-name,.company-card.done .card-email{color:var(--done-text)}
+.card-email{font-size:11px;color:var(--text3)}
+.company-card.selected .card-email{color:var(--purple);opacity:.8}
 
 /* badges */
-.score-high{display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:#FEF2F2;color:#DC2626;border:1px solid rgba(220,38,38,.2);white-space:nowrap}
-.score-mid{display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:#FFFBEB;color:#D97706;border:1px solid rgba(217,119,6,.2);white-space:nowrap}
-.score-low{display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:#F0F1F7;color:#9592B0;border:1px solid var(--bd);white-space:nowrap}
-.type-hire{background:#EEF2FF;color:#4338CA;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap}
-.type-out{background:#ECFDF5;color:#065F46;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap}
-.type-gen{background:#F0F1F7;color:#6B7280;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap}
-.sb{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
-.s-미접촉{background:#F1F0F8;color:#7B78A8}.s-메일발송{background:#EFF6FF;color:#2563EB}
-.s-응답{background:#F3EEFF;color:#5C3DE8}.s-미팅{background:#FFFBEB;color:#D97706}
-.s-계약{background:#ECFDF5;color:#059669}.s-거절{background:#FEF2F2;color:#DC2626}
-.na-badge{display:inline-flex;font-size:10px;font-weight:600;padding:2px 5px;border-radius:4px}
-.na-today{background:#FEF2F2;color:#DC2626}.na-week{background:#FEF3C7;color:#D97706}.na-future{background:#F0F1F7;color:#9592B0}
-.close-tag{display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;background:linear-gradient(90deg,#ECFDF5,#D1FAE5);color:#059669;border:1px solid rgba(5,150,105,.2)}
-.lnk{color:var(--ac);text-decoration:none;font-size:11px}.lnk:hover{text-decoration:underline}
+.badge{
+  display:inline-flex;align-items:center;
+  font-size:10px;font-weight:700;
+  padding:2px 6px;border-radius:5px;
+  white-space:nowrap;flex-shrink:0;
+}
+.badge-high{background:var(--high-bg);color:var(--high)}
+.badge-mid{background:var(--mid-bg);color:var(--mid)}
+.badge-ind{background:var(--purple-light);color:var(--purple)}
+.badge-done{background:#e8e8f0;color:var(--done-text)}
+.badge-noemail{background:#f1f5f9;color:#94a3b8}
 
-/* ── DETAIL PANEL ── */
-.dpov{position:fixed;inset:0;background:rgba(26,21,53,.35);backdrop-filter:blur(3px);z-index:300;display:none;justify-content:flex-end}
-.dpov.op{display:flex}
-.dp{width:400px;max-width:96vw;background:var(--card);height:100%;overflow-y:auto;box-shadow:-8px 0 40px rgba(0,0,0,.12);display:flex;flex-direction:column}
-.dp-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--card);z-index:1}
-.dp-nm{font-size:15px;font-weight:700}
-.dp-cl{background:none;border:none;font-size:18px;cursor:pointer;color:var(--t3);padding:2px 5px;border-radius:4px}
-.dp-cl:hover{background:var(--c2)}
-.dp-body{padding:15px 18px;flex:1;display:flex;flex-direction:column;gap:13px}
-.dp-lbl{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px}
-.dp-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.dp-sel{width:100%;padding:7px 10px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--c2);color:var(--t1);font-family:'Pretendard',sans-serif;font-size:12px;font-weight:600;outline:none;cursor:pointer}
-.dp-inp{width:100%;padding:7px 10px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--c2);color:var(--t1);font-family:'Pretendard',sans-serif;font-size:12px;outline:none;transition:.2s}
-.dp-inp:focus{border-color:var(--ac)}
-.dp-ta{width:100%;padding:7px 10px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--c2);color:var(--t1);font-family:'Pretendard',sans-serif;font-size:12px;outline:none;resize:vertical;min-height:65px;transition:.2s}
-.dp-ta:focus{border-color:var(--ac)}
-.dp-save{width:100%;padding:9px;background:linear-gradient(135deg,var(--ac2),var(--ac));border:none;border-radius:var(--rs);color:#fff;font-family:'Pretendard',sans-serif;font-size:12px;font-weight:700;cursor:pointer}
-.dp-save:hover{opacity:.9}
-.dp-msg-box{background:#F0F1F7;border-radius:7px;padding:10px 12px;font-size:11px;color:var(--t2);line-height:1.7;border-left:3px solid var(--ac);white-space:pre-line}
-.dp-copy{font-size:11px;color:var(--ac);cursor:pointer;font-weight:600;margin-top:5px;display:flex;align-items:center;gap:3px}
-.tl{display:flex;flex-direction:column}
-.tl-i{display:flex;gap:8px;padding-bottom:9px;position:relative}
-.tl-i::before{content:'';position:absolute;left:4px;top:14px;bottom:0;width:1px;background:var(--bd)}
-.tl-i:last-child::before{display:none}
-.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--ac);flex-shrink:0;margin-top:2px;border:2px solid #fff;box-shadow:0 0 0 2px var(--ac)}
-.tl-ct{flex:1}.tl-dt{font-size:10px;color:var(--t3);margin-bottom:1px}.tl-tx{font-size:11px;color:var(--t2)}
+/* done button */
+.done-btn{
+  flex-shrink:0;
+  padding:5px 11px;
+  border-radius:7px;
+  border:1.5px solid var(--border);
+  background:#fff;
+  font-family:'Pretendard',sans-serif;
+  font-size:11px;font-weight:600;color:var(--text3);
+  cursor:pointer;transition:all .15s;
+  white-space:nowrap;
+}
+.done-btn:hover{border-color:var(--green);color:var(--green);background:#f0fdf4}
+.done-btn.is-done{
+  background:#f0fdf4;border-color:var(--green);
+  color:var(--green);cursor:default;
+}
+.company-card.no-email .done-btn{display:none}
 
-/* ── PLAN ── */
-.plan-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:16px}
-.pg{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:16px}
-.pc{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:16px}
-.pt{font-size:12px;font-weight:700;margin-bottom:11px;display:flex;align-items:center;gap:6px}
-.pbadge{font-size:10px;padding:2px 6px;background:rgba(92,61,232,.1);border-radius:20px;color:var(--ac);font-weight:600}
+/* ── RIGHT PANEL ── */
+.right-panel{
+  display:flex;flex-direction:column;
+  background:#fff;
+  overflow:hidden;
+}
+.right-panel-inner{
+  flex:1;overflow-y:auto;
+  padding:20px;
+}
+.right-panel-inner::-webkit-scrollbar{width:5px}
+.right-panel-inner::-webkit-scrollbar-thumb{background:rgba(108,99,255,.18);border-radius:3px}
 
-.t5-list{display:flex;flex-direction:column}
-.t5-item{display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid var(--bd)}
-.t5-item:last-child{border-bottom:none}
-.t5-rank{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;width:18px;text-align:center;flex-shrink:0;margin-top:1px}
-.rk1{color:#F59E0B}.rk2{color:#9CA3AF}.rk3{color:#D97706}.rkn{color:var(--t3)}
-.t5-info{flex:1;min-width:0}
-.t5-nm{font-size:12px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.t5-meta{font-size:10px;color:var(--t3);margin-bottom:3px}
-.t5-reason{font-size:11px;color:var(--t2);background:var(--c2);border-radius:4px;padding:3px 6px;line-height:1.5;margin-bottom:3px}
-.t5-sc{font-family:'Space Mono',monospace;font-size:11px;color:var(--ac);background:rgba(92,61,232,.08);padding:2px 5px;border-radius:4px;flex-shrink:0}
-.send-btn{padding:4px 9px;background:linear-gradient(135deg,var(--ac2),var(--ac));color:#fff;border:none;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:'Pretendard',sans-serif;white-space:nowrap}
-.send-btn:hover{opacity:.9}
+.panel-empty{
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  height:100%;text-align:center;
+  color:var(--text3);
+}
+.panel-empty .ic{font-size:52px;margin-bottom:16px;opacity:.25}
+.panel-empty p{font-size:13px;line-height:1.7}
 
-.wl{list-style:none}
-.wi{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd)}
-.wi:last-child{border-bottom:none}
-.dl{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--ac);background:rgba(92,61,232,.07);border:1px solid rgba(92,61,232,.18);border-radius:5px;padding:3px 5px;flex-shrink:0;text-align:center;min-width:52px;align-self:flex-start;white-space:nowrap}
-.dl.today-day{background:rgba(92,61,232,.18);border-color:var(--ac);color:var(--ac2);font-weight:800}
-.dt2{flex:1}.dt2 h4{font-size:11px;font-weight:600;margin-bottom:3px}
-.tk{list-style:none}
-.tk li{font-size:11px;color:var(--t2);padding:2px 0;display:flex;align-items:flex-start;gap:3px}
-.tk li::before{content:'›';color:var(--ac);font-weight:700;flex-shrink:0}
+/* mail panel */
+.mail-panel{}
+.mail-company{
+  font-size:18px;font-weight:800;color:var(--text);
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.mail-company small{
+  font-size:12px;font-weight:500;color:var(--text3);
+}
 
-.strat-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:16px}
-.strat-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px}
-.strat-type{font-size:11px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:5px}
-.strat-cnt{font-size:10px;color:var(--t3);margin-bottom:4px}
-.strat-body{font-size:11px;color:var(--t2);line-height:1.6;margin-bottom:7px}
-.strat-msg{font-size:11px;background:var(--c2);border-radius:5px;padding:7px 9px;color:var(--t2);line-height:1.5;border-left:3px solid var(--ac);white-space:pre-line}
-.strat-copy{font-size:10px;color:var(--ac);cursor:pointer;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:3px}
+.panel-label{
+  font-size:10px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;color:var(--text3);
+  margin-bottom:6px;display:block;
+}
 
-.close-section{background:linear-gradient(135deg,rgba(5,150,105,.06),rgba(16,185,129,.03));border:1px solid rgba(5,150,105,.2);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
-.close-list{display:flex;flex-direction:column;gap:7px;margin-top:8px}
-.close-item{display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--card);border-radius:var(--rs);border:1px solid rgba(5,150,105,.15)}
+/* template select */
+.tmpl-select{
+  width:100%;padding:9px 12px;
+  border:1.5px solid var(--border);border-radius:9px;
+  background:#fff;color:var(--text);
+  font-family:'Pretendard',sans-serif;
+  font-size:13px;font-weight:500;
+  outline:none;cursor:pointer;
+  margin-bottom:16px;
+  transition:border-color .15s;
+}
+.tmpl-select:focus{border-color:var(--purple)}
 
-/* ── INDUSTRY TARGET ── */
-.ind-target-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:18px}
-.ind-target-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:15px;transition:.2s;cursor:default}
-.ind-target-card:hover{border-color:var(--bdg);box-shadow:0 3px 14px rgba(92,61,232,.08)}
-.ind-tc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.ind-tc-name{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
-.ind-tc-cnt{font-family:'Space Mono',monospace;font-size:10px;color:var(--ac);background:rgba(92,61,232,.08);padding:2px 7px;border-radius:20px}
-.ind-tc-need{font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap}
-.ind-need-high{background:#FEF2F2;color:#DC2626}
-.ind-need-mid{background:#FEF3C7;color:#D97706}
-.ind-tc-point{font-size:11px;color:var(--t2);margin-bottom:8px;line-height:1.5}
-.ind-tc-msg{font-size:11px;background:var(--c2);border-left:3px solid var(--ac);border-radius:0 5px 5px 0;padding:7px 10px;color:var(--t2);line-height:1.6;white-space:pre-line;margin-bottom:7px}
-.ind-tc-actions{display:flex;gap:6px;flex-wrap:wrap}
-.ind-tc-btn{font-size:10px;padding:4px 9px;border-radius:5px;border:1px solid var(--bd);background:var(--c2);color:var(--t2);cursor:pointer;font-family:'Pretendard',sans-serif;font-weight:500;transition:.2s}
-.ind-tc-btn:hover{border-color:var(--ac);color:var(--ac)}
-.ind-tc-btn.primary{background:linear-gradient(135deg,var(--ac2),var(--ac));color:#fff;border:none;font-weight:600}
+/* subject row */
+.subject-row{
+  display:flex;gap:8px;align-items:stretch;
+  margin-bottom:14px;
+}
+.subject-input{
+  flex:1;padding:9px 12px;
+  border:1.5px solid var(--border);border-radius:9px;
+  background:#fff;color:var(--text);
+  font-family:'Pretendard',sans-serif;font-size:13px;
+  outline:none;transition:border-color .15s;
+}
+.subject-input:focus{border-color:var(--purple)}
 
-/* company list inside industry card */
-.ind-co-list{display:flex;flex-direction:column;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)}
-.ind-co-row{display:flex;align-items:center;gap:7px;font-size:11px}
-.ind-co-name{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ind-co-email{font-size:10px;color:var(--ok);display:flex;align-items:center;gap:2px}
-.ind-co-no-email{font-size:10px;color:var(--err)}
-.ind-co-extract{font-size:10px;color:var(--ac);cursor:pointer;font-weight:500;white-space:nowrap}
-.ind-co-extract:hover{text-decoration:underline}
+/* body textarea */
+.body-wrap{position:relative;margin-bottom:14px}
+.body-textarea{
+  width:100%;min-height:380px;
+  padding:12px 14px;
+  border:1.5px solid var(--border);border-radius:11px;
+  background:#fff;color:var(--text);
+  font-family:'Pretendard',sans-serif;font-size:13px;
+  line-height:1.75;
+  outline:none;resize:vertical;
+  transition:border-color .15s;
+}
+.body-textarea:focus{border-color:var(--purple)}
 
-/* email extract progress */
-.email-extract-bar{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:13px 16px;margin-bottom:14px;display:none}
-.email-extract-bar.show{display:block}
-.ee-title{font-size:12px;font-weight:600;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between}
-.ee-log{font-size:10px;color:var(--t3);max-height:60px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+/* copy buttons */
+.copy-btn{
+  display:flex;align-items:center;gap:5px;
+  padding:8px 14px;border-radius:8px;
+  border:none;
+  background:var(--purple);color:#fff;
+  font-family:'Pretendard',sans-serif;
+  font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .15s;
+  white-space:nowrap;flex-shrink:0;
+}
+.copy-btn:hover{background:var(--purple-dark)}
+.copy-btn.copied{background:var(--green)}
+.copy-btn-full{width:100%;justify-content:center;padding:10px}
 
-/* ── MODAL ── */
-.mo{position:fixed;inset:0;background:rgba(26,21,53,.4);backdrop-filter:blur(4px);z-index:400;display:none;align-items:center;justify-content:center}
-.mo.op{display:flex}
-.mb{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);width:500px;max-width:94vw;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.12);padding:20px}
-.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
-.mtl{font-size:13px;font-weight:700}
-.mcl{background:none;border:none;font-size:18px;cursor:pointer;color:var(--t3);padding:2px 4px;border-radius:4px}
-.mcl:hover{background:var(--c2)}
-.mr{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:8px 0;border-bottom:1px solid var(--bd)}
-.mr:last-child{border-bottom:none}
-.mri{flex:1}.mrn{font-size:12px;font-weight:600}.mrm{font-size:10px;color:var(--t3);margin-top:1px}
-.mab{padding:4px 10px;background:var(--ac);color:#fff;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Pretendard',sans-serif}
+/* footer preview */
+.footer-preview{
+  background:#f8f8fb;
+  border:1.5px dashed var(--border);
+  border-radius:9px;
+  padding:12px 14px;
+  font-size:11px;color:var(--text3);
+  line-height:1.7;
+  margin-top:4px;
+}
+.footer-preview strong{color:var(--purple)}
 
 /* ── TOAST ── */
-.toast{position:fixed;bottom:18px;right:18px;background:var(--card);border:1px solid var(--bdg);border-radius:var(--rs);padding:9px 14px;font-size:12px;color:var(--t1);z-index:9999;transform:translateY(60px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:7px;box-shadow:0 8px 24px rgba(0,0,0,.1)}
-.toast.show{transform:translateY(0);opacity:1}
-.toast.ok{border-color:rgba(5,150,105,.35)}.toast.er{border-color:rgba(220,38,38,.35)}.toast.wa{border-color:rgba(217,119,6,.35)}
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:#1a1a2e;color:#fff;
+  padding:10px 20px;border-radius:25px;
+  font-size:13px;font-weight:600;
+  z-index:9999;opacity:0;
+  transition:all .3s;
+  pointer-events:none;
+  display:flex;align-items:center;gap:7px;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ── UZ / EMPTY ── */
-.uz{border:2px dashed var(--bd);border-radius:var(--r);padding:44px 32px;text-align:center;cursor:pointer;transition:.3s;background:rgba(92,61,232,.015);margin-bottom:18px}
-.uz:hover,.uz.dv{border-color:var(--ac);background:rgba(92,61,232,.04)}
-.uz h3{font-size:13px;font-weight:600;margin:9px 0 5px}.uz p{font-size:11px;color:var(--t3)}.uic{font-size:38px}
-.empty{text-align:center;padding:40px 20px;color:var(--t3)}
-.empty .ic{font-size:38px;margin-bottom:10px;opacity:.4}
-.empty h3{font-size:13px;font-weight:600;margin-bottom:5px;color:var(--t2)}
-.empty p{font-size:11px;line-height:1.6}
-.ndm{text-align:center;padding:22px;color:var(--t3);font-size:11px}
-
+/* scrollbar global */
 ::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-thumb{background:rgba(92,61,232,.2);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:rgba(92,61,232,.35)}
+::-webkit-scrollbar-thumb{background:rgba(108,99,255,.15);border-radius:3px}
 
-@media(max-width:1280px){.g5{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(2,1fr)}.cg3{grid-template-columns:1fr 1fr}.plan-kpi{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:960px){.cg3,.cg2,.pg,.strat-grid{grid-template-columns:1fr}.cards-grid{grid-template-columns:1fr}}
-@media(max-width:768px){.hd{padding:11px 13px}.tabs{display:none}.main{padding:13px 11px}.g5,.g4{grid-template-columns:repeat(2,1fr)}.dp{width:100%}}
+/* responsive */
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr;grid-template-rows:50vh 50vh}
+  .header-stats{display:none}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
 
 <!-- HEADER -->
-<header class="hd">
+<header class="header">
   <div class="logo">
-    <div class="logo-ic">AC</div>
-    <div class="logo-tx">AI<em>CUT</em> <span style="color:var(--t3);font-weight:400;font-size:11px">영업 대시보드</span></div>
+    <div class="logo-mark">AC</div>
+    <div class="logo-text">AI<em>CUT</em> 영업 대시보드</div>
   </div>
-  <div class="tabs">
-    <button class="tb on" onclick="swTab('dashboard',this)">📊 대시보드</button>
-    <button class="tb"    onclick="swTab('companies',this)">🏢 기업 목록</button>
-    <button class="tb"    onclick="swTab('plan',this)">🎯 영업 플랜</button>
-  </div>
-  <div class="hdr">
-    <div id="alertBtn" class="ab" onclick="openOdModal()">
-      <span style="width:6px;height:6px;border-radius:50%;background:#F59E0B;display:inline-block"></span>
-      <span id="alertTx">팔로업 0건</span>
+
+  <div class="header-stats">
+    <div class="stat-item">
+      📬 이메일 보유 <span class="stat-val" id="statEmail">0</span>개
     </div>
-    <button class="ghost" onclick="exportXlsx()">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      내보내기
-    </button>
-    <button class="crawl-btn" id="crawlBtn" onclick="startCrawl()" disabled>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      링크 분석
-    </button>
-    <button class="collect-btn" id="collectBtn" onclick="startCollect()">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-      신규 수집
-    </button>
-    <button class="upbtn" onclick="document.getElementById('fi').click()">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      엑셀 업로드
-    </button>
-    <input type="file" id="fi" accept=".xlsx,.xls,.csv" multiple onchange="onFile(event)">
+    <div class="stat-item">
+      ✅ 발송완료 <span class="stat-val" id="statDone">0</span>개
+    </div>
+    <div class="stat-item">
+      📍 남은 곳 <span class="stat-val" id="statLeft">0</span>개
+    </div>
   </div>
+
+  <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    엑셀 업로드
+  </button>
+  <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleUpload(event)">
 </header>
 
-<main class="main">
+<!-- LAYOUT -->
+<div class="layout">
 
-<!-- ══ DASHBOARD ══ -->
-<div id="pane-dashboard" class="pane on">
-  <div class="crawl-bar" id="crawlBar">
-    <div class="crawl-hd"><div class="crawl-title">🔍 <span id="crawlTitle">분석 중...</span></div><div class="crawl-stat" id="crawlStat">0/0</div></div>
-    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-    <div class="crawl-log" id="crawlLog"></div>
-  </div>
-  <div id="collectResult" class="collect-result">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
-      <div style="font-size:12px;font-weight:700">🆕 <span id="collectSummary"></span></div>
-      <button onclick="g('collectResult').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--t3);font-size:15px">✕</button>
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+
+    <!-- bookmark -->
+    <div class="bookmark-bar hidden" id="bookmarkBar">
+      <span>🔖 지난번 여기까지:</span>
+      <span class="bookmark-name" id="bookmarkName"></span>
+      <span id="bookmarkNum" style="color:var(--text3)"></span>
+      <span class="bookmark-clear" onclick="clearBookmark()">초기화</span>
     </div>
-    <div id="collectList"></div>
-  </div>
 
-  <!-- TODAY -->
-  <div class="today-card">
-    <div class="today-hd">
-      <div class="today-title">⚡ 오늘 할 일 <span class="today-cnt" id="todayCnt">0건</span></div>
-      <span style="font-size:11px;color:var(--t3)" id="todayDate"></span>
+    <!-- tabs -->
+    <div class="tab-bar" id="tabBar">
+      <button class="tab-btn on" data-ind="전체" onclick="setTab(this)">전체 <span class="tab-cnt" id="cnt-전체">0</span></button>
+      <button class="tab-btn" data-ind="교육" onclick="setTab(this)">교육 <span class="tab-cnt" id="cnt-교육">0</span></button>
+      <button class="tab-btn" data-ind="부동산" onclick="setTab(this)">부동산 <span class="tab-cnt" id="cnt-부동산">0</span></button>
+      <button class="tab-btn" data-ind="이커머스" onclick="setTab(this)">이커머스 <span class="tab-cnt" id="cnt-이커머스">0</span></button>
+      <button class="tab-btn" data-ind="프랜차이즈" onclick="setTab(this)">프랜차이즈 <span class="tab-cnt" id="cnt-프랜차이즈">0</span></button>
+      <button class="tab-btn" data-ind="병원" onclick="setTab(this)">병원 <span class="tab-cnt" id="cnt-병원">0</span></button>
+      <button class="tab-btn" data-ind="미디어" onclick="setTab(this)">미디어 <span class="tab-cnt" id="cnt-미디어">0</span></button>
+      <button class="tab-btn" data-ind="광고" onclick="setTab(this)">광고 <span class="tab-cnt" id="cnt-광고">0</span></button>
+      <button class="tab-btn" data-ind="기타" onclick="setTab(this)">기타 <span class="tab-cnt" id="cnt-기타">0</span></button>
     </div>
-    <div id="todayList" class="today-list"><span style="font-size:11px;color:var(--t3)">데이터를 업로드하면 표시됩니다</span></div>
-  </div>
 
-  <!-- WEEKLY GOAL -->
-  <div class="goal-card">
-    <div class="goal-title">🎯 이번주 목표</div>
-    <div class="goal-grid">
-      <div class="goal-item">
-        <div class="goal-label">메일 발송</div>
-        <div class="goal-inp-row">
-          <span class="goal-current" id="goalMailCur">0</span>
-          <span style="font-size:11px;color:var(--t3)">/ </span>
-          <input class="goal-inp" id="goalMailTgt" type="number" min="0" max="999" value="10" onchange="saveGoals();renderGoals()">
-        </div>
-        <div class="goal-track"><div class="goal-fill" id="goalMailFill" style="width:0%;background:#2563EB"></div></div>
-      </div>
-      <div class="goal-item">
-        <div class="goal-label">응답 수신</div>
-        <div class="goal-inp-row">
-          <span class="goal-current" id="goalRespCur">0</span>
-          <span style="font-size:11px;color:var(--t3)">/ </span>
-          <input class="goal-inp" id="goalRespTgt" type="number" min="0" max="999" value="3" onchange="saveGoals();renderGoals()">
-        </div>
-        <div class="goal-track"><div class="goal-fill" id="goalRespFill" style="width:0%;background:#5C3DE8"></div></div>
-      </div>
-      <div class="goal-item">
-        <div class="goal-label">미팅 진행</div>
-        <div class="goal-inp-row">
-          <span class="goal-current" id="goalMeetCur">0</span>
-          <span style="font-size:11px;color:var(--t3)">/ </span>
-          <input class="goal-inp" id="goalMeetTgt" type="number" min="0" max="999" value="2" onchange="saveGoals();renderGoals()">
-        </div>
-        <div class="goal-track"><div class="goal-fill" id="goalMeetFill" style="width:0%;background:#D97706"></div></div>
-      </div>
-      <div class="goal-item">
-        <div class="goal-label">계약 성사</div>
-        <div class="goal-inp-row">
-          <span class="goal-current" id="goalContCur">0</span>
-          <span style="font-size:11px;color:var(--t3)">/ </span>
-          <input class="goal-inp" id="goalContTgt" type="number" min="0" max="999" value="1" onchange="saveGoals();renderGoals()">
-        </div>
-        <div class="goal-track"><div class="goal-fill" id="goalContFill" style="width:0%;background:#059669"></div></div>
+    <!-- card list -->
+    <div class="card-list" id="cardList">
+      <div class="empty-state">
+        <div class="ic">📂</div>
+        <h3>엑셀 파일을 업로드하세요</h3>
+        <p>회사명, 이메일 컬럼이 포함된<br>.xlsx 또는 .csv 파일을 올려주세요</p>
       </div>
     </div>
   </div>
 
-  <div id="upzone" class="uz" onclick="document.getElementById('fi').click()" ondragover="dov(event)" ondragleave="dol(event)" ondrop="dod(event)">
-    <div class="uic">📂</div><h3>엑셀 파일을 업로드하세요</h3>
-    <p>회사명 + 링크 컬럼 포함 시 자동 분석 · 여러 파일 동시 업로드 · 드래그 앤 드롭</p>
-  </div>
-
-  <div class="sec">영업 현황</div>
-  <div class="g5">
-    <div class="kc" style="--ca:linear-gradient(90deg,#4527C8,#5C3DE8)"><div class="kl">전체 기업</div><div class="kv" id="k0" style="color:#5C3DE8">0</div><div class="ks">DB 등록</div><div class="ki">🏢</div></div>
-    <div class="kc" style="--ca:linear-gradient(90deg,#B91C1C,#EF4444)"><div class="kl">🔥 지금 연락</div><div class="kv" id="k_high" style="color:#DC2626">0</div><div class="ks">HIGH 니즈</div><div class="ki">🔥</div></div>
-    <div class="kc" style="--ca:linear-gradient(90deg,#B45309,#F59E0B)"><div class="kl">⭐ 이번주</div><div class="kv" id="k_mid" style="color:#D97706">0</div><div class="ks">MID 니즈</div><div class="ki">⭐</div></div>
-    <div class="kc" style="--ca:linear-gradient(90deg,#065F46,#10B981)"><div class="kl">계약 완료</div><div class="kv" id="k4" style="color:#059669">0</div><div class="ks" id="k4s">성사율 0%</div><div class="ki">✅</div></div>
-    <div class="kc" style="--ca:linear-gradient(90deg,#B45309,#FBBF24)"><div class="kl">팔로업 지연</div><div class="kv" id="k7" style="color:#D97706">0</div><div class="ks">7일↑ 미응답</div><div class="ki">⏰</div></div>
-  </div>
-  <div class="sec" style="margin-top:2px">데이터 품질 &amp; 파이프라인</div>
-  <div class="g4">
-    <div class="kc" style="--ca:linear-gradient(90deg,#0F766E,#14B8A6)"><div class="kl">이메일 보유율</div><div class="kv" id="k5" style="color:#0F766E">0%</div><div class="ks" id="k5s">0/0</div><div class="ki">📬</div></div>
-    <div class="kc" style="--ca:linear-gradient(90deg,#1D4ED8,#3B82F6)"><div class="kl">분석 완료</div><div class="kv" id="k_crawled" style="color:#2563EB">0</div><div class="ks">링크 크롤링</div><div class="ki">🔍</div></div>
-    <div class="kc" style="--ca:linear-gradient(90deg,#7C2D92,#A855F7)"><div class="kl">채용 공고</div><div class="kv" id="k_hire" style="color:#9333EA">0</div><div class="ks">영상 채용</div><div class="ki">📋</div></div>
-    <div class="kc" style="--ca:linear-gradient(90deg,#065F46,#22C55E)"><div class="kl">외주 공고</div><div class="kv" id="k_out" style="color:#16A34A">0</div><div class="ks">영상 외주</div><div class="ki">🎬</div></div>
-  </div>
-  <div class="cg3">
-    <div class="cc"><div class="ct">업종별 분포</div><div class="ch"><canvas id="cPie"></canvas></div></div>
-    <div class="cc"><div class="ct">니즈 점수 분포</div><div class="ch"><canvas id="cScore"></canvas></div></div>
-    <div class="cc"><div class="ct">영업 단계 현황</div><div class="ch"><canvas id="cBar"></canvas></div></div>
-  </div>
-  <div class="cg2">
-    <div class="cc"><div class="ct">전환율 퍼널</div><div id="fnViz" class="fn-rows"><div class="ndm">데이터 없음</div></div></div>
-    <div class="cc"><div class="ct">DB 데이터 품질</div><div id="qlViz" class="ql-rows"><div class="ndm">데이터 없음</div></div></div>
-  </div>
-
-  <!-- INDUSTRY FILTER CHIPS -->
-  <div class="sec">채용공고 업종별 분류</div>
-  <div id="indChips" class="ind-chips"></div>
-
-  <!-- ACTIVITY LOG -->
-  <div class="sec" style="margin-top:4px">최근 활동 내역</div>
-  <div class="cc" style="margin-bottom:0">
-    <div id="actLog" class="act-list"><div class="ndm">활동 내역이 없습니다</div></div>
-  </div>
-</div>
-
-<!-- ══ COMPANIES ══ -->
-<div id="pane-companies" class="pane">
-  <!-- Filter bar -->
-  <div class="card-filter-bar">
-    <button class="cf-btn high on" id="cf-high" onclick="setCardFilter('high',this)">🔥 지금 연락 <span class="cf-cnt" id="cf-high-cnt">0</span></button>
-    <button class="cf-btn mid"     id="cf-mid"  onclick="setCardFilter('mid',this)">⭐ 이번주 <span class="cf-cnt" id="cf-mid-cnt">0</span></button>
-    <button class="cf-btn"         id="cf-all"  onclick="setCardFilter('all',this)">전체 <span class="cf-cnt" id="cf-all-cnt">0</span></button>
-    <div class="card-srch">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" id="cardSrch" placeholder="회사명, 업종, 공고내용 검색..." oninput="renderCards()">
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="right-panel-inner" id="rightPanel">
+      <div class="panel-empty">
+        <div class="ic">✉️</div>
+        <p>왼쪽에서 기업을 선택하면<br>업종에 맞는 메일 템플릿이<br>자동으로 표시됩니다</p>
+      </div>
     </div>
-    <button class="ghost" onclick="exportXlsx()">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    </button>
   </div>
-  <div id="cardsGrid" class="cards-grid"></div>
+
 </div>
 
-<!-- ══ PLAN ══ -->
-<div id="pane-plan" class="pane">
-  <!-- 이메일 추출 진행 바 -->
-  <div class="email-extract-bar" id="emailExtractBar">
-    <div class="ee-title">
-      <span>📬 홈페이지에서 이메일 추출 중...</span>
-      <span id="eeProgress" style="font-family:'Space Mono',monospace;font-size:11px;color:var(--t3)">0/0</span>
-    </div>
-    <div class="progress-track"><div class="progress-fill" id="eeFill" style="width:0%"></div></div>
-    <div class="ee-log" id="eeLog"></div>
-  </div>
-  <div id="planContent">
-    <div class="empty" style="padding:70px 20px"><div class="ic">🎯</div><h3>영업 플랜 생성 대기 중</h3><p>엑셀 업로드 후 링크 분석을 실행하면 AI 플랜이 생성됩니다</p></div>
-  </div>
-</div>
-
-</main>
-</div>
-
-<!-- DETAIL PANEL -->
-<div class="dpov" id="dpov" onclick="if(event.target===this)closePanel()">
-  <div class="dp">
-    <div class="dp-hd"><div class="dp-nm" id="dpNm">—</div><button class="dp-cl" onclick="closePanel()">✕</button></div>
-    <div class="dp-body" id="dpBody"></div>
-  </div>
-</div>
-
-<!-- OD MODAL -->
-<div class="mo" id="odModal" onclick="if(event.target===this)closeOdModal()">
-  <div class="mb">
-    <div class="mh"><div class="mtl">⏰ 팔로업 지연 기업</div><button class="mcl" onclick="closeOdModal()">✕</button></div>
-    <div id="odList"></div>
-  </div>
-</div>
-
-<div id="toast" class="toast"></div>
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
 <script>
-// ════════════════════════════════
-// STATE
-// ════════════════════════════════
-let DB=[], ch={}, panelId=null, crawling=false, collecting=false;
-let cardFilter='high', indFilter='';
-let activityLog=[];  // {time,company,action,color}
+// ══════════════════════════════════
+// DATA
+// ══════════════════════════════════
+let DB = [];
+let selectedId = null;
+let currentTab = '전체';
 
-// ════════════════════════════════
-// COLUMN MAP
-// ════════════════════════════════
-const CM={
-  company:   ['회사명','기업명','업체명','상호명','company','name'],
-  industry:  ['업종','산업','분야','카테고리','industry','sector'],
-  contact:   ['담당자','담당','이름','성명','contact','person'],
-  email:     ['이메일','email','e-mail','mail'],
-  phone:     ['연락처','전화','휴대폰','mobile','phone','tel'],
-  service:   ['주요서비스','서비스','service'],
-  stage:     ['영업단계','단계','영업 단계','status','상태'],
-  memo:      ['메모','비고','note','notes','remark'],
-  date:      ['접촉일','마지막접촉일','날짜','date','접촉날짜','last_contact'],
-  region:    ['지역','지사','위치','region','location','city','시도'],
-  size:      ['규모','기업규모','사원수','직원수','size','employees','인원'],
-  budget:    ['예상금액','예산','계약금액','금액','budget','amount','price','단가','연봉'],
-  website:   ['웹사이트','홈페이지','사이트','website','homepage','web'],
-  nextAction:['다음액션일','다음접촉일','follow-up','followup','next_action','액션일','예정일'],
-  mailDate:  ['메일발송일','발송일','mail_date','maildate','콜드메일발송일'],
-  link:      ['링크','공고링크','url','link','채용링크','외주링크','공고url','job_url','공고주소','채용공고','공고','출처','채용공고링크'],
+const STORAGE_KEY_DATA  = 'aicut_v2_data';
+const STORAGE_KEY_DONE  = 'aicut_v2_done';
+const STORAGE_KEY_MARK  = 'aicut_v2_bookmark';
+
+// ══════════════════════════════════
+// INDUSTRY KEYWORDS
+// ══════════════════════════════════
+const IND_KEYWORDS = {
+  '교육':      ['학원','교육','아카데미','스쿨','클래스','캠퍼스','강의','인강','에듀'],
+  '부동산':    ['부동산','공인중개','분양','리얼티','임대','중개사','매물'],
+  '이커머스':  ['쇼핑','몰','커머스','마켓','스토어','쇼핑몰','온라인','셀러','shop'],
+  '프랜차이즈':['프랜차이즈','가맹','체인','FC본사'],
+  '병원':      ['병원','의원','클리닉','의료','한의원','치과','성형','피부','안과','정형'],
+  '미디어':    ['미디어','유튜브','콘텐츠','채널','MCN','방송','스튜디오'],
+  '광고':      ['광고','마케팅','홍보','에이전시','대행','PR'],
 };
 
-function detectCols(headers){
-  const r={},lo=headers.map(h=>String(h).toLowerCase().trim());
-  for(const[k,al] of Object.entries(CM)){
-    for(const a of al){ const i=lo.findIndex(h=>h.includes(a.toLowerCase())); if(i>=0){r[k]=headers[i];break;} }
+function classifyInd(company='', rawInd='') {
+  const text = (company + ' ' + rawInd).toLowerCase();
+  for (const [ind, kws] of Object.entries(IND_KEYWORDS)) {
+    if (kws.some(k => text.includes(k.toLowerCase()))) return ind;
+  }
+  return '기타';
+}
+
+function classifyPriority(rawPriority='', ind='') {
+  const v = String(rawPriority).toLowerCase();
+  if (v.includes('high') || v.includes('높') || v === '1') return 'high';
+  if (v.includes('mid') || v.includes('중') || v === '2') return 'mid';
+  // 업종 기반 자동 우선순위
+  if (['교육','병원','이커머스','프랜차이즈'].includes(ind)) return 'high';
+  if (['부동산','미디어','광고'].includes(ind)) return 'mid';
+  return 'mid';
+}
+
+// ══════════════════════════════════
+// MAIL TEMPLATES
+// ══════════════════════════════════
+const FOOTER = `
+---
+AICUT | AI 영상 편집 서비스
+master@aicut.co.kr | aicut.co.kr
+수신거부: master@aicut.co.kr로 '수신거부' 제목으로 회신해 주세요.`;
+
+const TEMPLATES = {
+  '교육형': {
+    label: '📚 교육형',
+    matchInd: ['교육'],
+    subject: (co) => `[${co}] 강의 영상, 편집에 얼마나 걸리고 계세요?`,
+    body: (co) => `안녕하세요, ${co} 담당자님
+
+강의 콘텐츠를 인상깊게 봤습니다.
+
+말실수 컷, 자막 삽입, 챕터 구분, 썸네일까지
+반복되는 작업인데 매번 사람을 찾거나
+내부에서 처리하고 계시진 않으신가요?
+
+저희 에이컷은 교육 콘텐츠 전담 편집팀으로
+강의 영상 포맷을 한 번만 세팅하면
+이후 소스 전달 후 48시간 안에 납품합니다.
+
+✅ 편당 단가 8만원부터
+✅ 월 20편 이상 대량 할인 가능
+✅ 자막 스타일·인트로·아웃트로 고정 세팅
+
+현재 월 제작량이 어떻게 되시는지
+알려주시면 맞춤 견적 드리겠습니다.
+
+에이컷 서비스 확인 → aicut.co.kr
+
+감사합니다.${FOOTER}`,
+  },
+  '부동산형': {
+    label: '🏢 부동산형',
+    matchInd: ['부동산'],
+    subject: (co) => `[${co}] 매물 영상, 매번 새로 만들기 번거로우시죠?`,
+    body: (co) => `안녕하세요, ${co} 담당자님
+
+매물 영상 잘 보고 있습니다.
+
+매물이 바뀔 때마다 편집자 찾고, 소통하고,
+수정하는 과정이 생각보다 오래 걸리지 않으신가요?
+
+저희 에이컷은 부동산 영상 포맷을
+한 번 세팅해두면 소스만 보내주시면
+48시간 내 편집 완료해 드립니다.
+
+✅ 편당 15만원부터
+✅ 월 10편 이상 고정 계약 시 할인
+✅ 자막, BGM, 로고 삽입 포함
+✅ 수정 2회 기본 포함
+
+한 달 무료 샘플 편집 제안드릴 수 있습니다.
+
+에이컷 서비스 확인 → aicut.co.kr
+
+감사합니다.${FOOTER}`,
+  },
+  '이커머스형': {
+    label: '🛍️ 이커머스형',
+    matchInd: ['이커머스'],
+    subject: (co) => `[${co}] 신제품 영상, 매번 제작하기 부담되지 않으세요?`,
+    body: (co) => `안녕하세요, ${co} 담당자님
+
+제품 영상 인상깊게 봤습니다.
+
+신제품이 나올 때마다 촬영·편집·업로드까지
+내부에서 다 처리하기엔 한계가 있으시죠.
+
+저희 에이컷은 제품 숏폼 영상 전문 편집팀으로
+촬영본만 보내주시면
+15~60초 제품 영상을 48시간 내 납품합니다.
+
+✅ 숏폼 편당 5~10만원
+✅ 월 20편 이상 대량 패키지 별도 협의
+✅ 쿠팡·스마트스토어·릴스 포맷 모두 지원
+✅ 썸네일 제작 포함
+
+현재 월 몇 편 정도 제작하시는지
+알려주시면 맞춤 패키지 제안드리겠습니다.
+
+에이컷 서비스 확인 → aicut.co.kr
+
+감사합니다.${FOOTER}`,
+  },
+  '프랜차이즈형': {
+    label: '🍽️ 프랜차이즈형',
+    matchInd: ['프랜차이즈'],
+    subject: (co) => `[${co}] 시즌 영상, 매번 외주 맡기고 계신가요?`,
+    body: (co) => `안녕하세요, ${co} 담당자님
+
+마케팅 콘텐츠를 보고 연락드렸습니다.
+
+시즌마다 신메뉴·가맹모집·캠페인 영상이
+반복적으로 필요하시죠.
+
+매번 외주 업체를 찾고 브랜드 가이드라인을
+다시 설명하는 과정이 피로하지 않으신가요?
+
+저희 에이컷은 브랜드 가이드라인을
+한 번 세팅하면 이후 모든 영상에
+자동으로 적용해서 납품합니다.
+
+✅ 월정액 990,000원에 10편
+✅ 브랜드 템플릿 고정 세팅 무료
+✅ 시즌 캠페인 영상 우선 처리
+
+담당자분과 15분만 미팅 가능하신가요?
+
+에이컷 서비스 확인 → aicut.co.kr
+
+감사합니다.${FOOTER}`,
+  },
+  '병원형': {
+    label: '🏥 병원형',
+    matchInd: ['병원'],
+    subject: (co) => `[${co}] 유튜브 영상 한 편에 100만원, 계속 이렇게 하실 건가요?`,
+    body: (co) => `안녕하세요, ${co} 담당자님
+
+유튜브 채널 잘 보고 있습니다.
+
+병원 유튜브는 꾸준히 올리는 것이 핵심인데
+편당 100만원 이상의 비용이 부담되시진 않으신가요?
+
+저희 에이컷은 의료 콘텐츠 편집 전담팀으로
+촬영본만 보내주시면
+자막·챕터·인트로·썸네일까지 48시간 내 완성합니다.
+
+✅ 편당 30만원부터 (기존 대비 70% 절감)
+✅ 월 4~8편 정기 계약 시 추가 할인
+✅ 수정 2회 기본 포함
+
+첫 1편 무료 샘플 제작 제안드립니다.
+
+에이컷 서비스 확인 → aicut.co.kr
+
+감사합니다.${FOOTER}`,
+  },
+};
+
+const TMPL_KEYS = Object.keys(TEMPLATES);
+
+function getDefaultTemplate(ind) {
+  for (const [key, t] of Object.entries(TEMPLATES)) {
+    if (t.matchInd.includes(ind)) return key;
+  }
+  // fallback by ind
+  if (['미디어','광고','기타'].includes(ind)) return '이커머스형';
+  return '교육형';
+}
+
+// ══════════════════════════════════
+// UPLOAD & PARSE
+// ══════════════════════════════════
+function handleUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      let raw;
+      if (ext === 'csv') {
+        const wb = XLSX.read(ev.target.result, { type: 'string' });
+        raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { raw: false, defval: '' });
+      } else {
+        const wb = XLSX.read(ev.target.result, { type: 'array' });
+        raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { raw: false, defval: '' });
+      }
+      if (!raw.length) { showToast('⚠️ 데이터가 없습니다'); return; }
+      parseData(raw);
+    } catch(err) { showToast('❌ 파일 파싱 오류'); console.error(err); }
+  };
+  ext === 'csv' ? reader.readAsText(file, 'UTF-8') : reader.readAsArrayBuffer(file);
+  e.target.value = '';
+}
+
+const COL_ALIASES = {
+  company:  ['회사명','기업명','업체명','상호명','company','name'],
+  email:    ['이메일','email','e-mail','mail'],
+  industry: ['업종','산업','분야','industry','sector','카테고리'],
+  priority: ['우선순위','priority','중요도','등급'],
+};
+
+function detectCol(headers) {
+  const r = {}, lo = headers.map(h => String(h).toLowerCase().trim());
+  for (const [k, al] of Object.entries(COL_ALIASES)) {
+    for (const a of al) {
+      const i = lo.findIndex(h => h.includes(a.toLowerCase()));
+      if (i >= 0) { r[k] = headers[i]; break; }
+    }
   }
   return r;
 }
 
-// ════════════════════════════════
-// FILE UPLOAD
-// ════════════════════════════════
-function onFile(e){ const files=[...e.target.files]; if(files.length) procAll(files); e.target.value=''; }
-function dov(e){ e.preventDefault(); e.currentTarget.classList.add('dv'); }
-function dol(e){ e.currentTarget.classList.remove('dv'); }
-function dod(e){ e.preventDefault(); e.currentTarget.classList.remove('dv'); const files=[...e.dataTransfer.files].filter(f=>/\.(xlsx|xls|csv)$/i.test(f.name)); if(files.length) procAll(files); }
+function parseData(raw) {
+  const headers = Object.keys(raw[0]);
+  const cm = detectCol(headers);
+  const doneSet = loadDone();
 
-function procAll(files){
-  const total=files.length; let done=0, all=[], errs=[];
-  const finish=()=>{
-    const ek=new Set(DB.map(d=>`${d.company.toLowerCase()}|${d.email}`));
-    const sk=new Set(); let skip=0; const nr=[];
-    for(const r of all){ const k=`${r.company.toLowerCase()}|${r.email}`; if(ek.has(k)||sk.has(k)){skip++;}else{sk.add(k);nr.push(r);} }
-    DB=[...DB,...nr].map((d,i)=>({...d,id:i}));
-    save(); updateAll();
-    g('upzone').style.display='none';
-    g('crawlBtn').disabled=!DB.some(d=>d.link&&d.link.startsWith('http'));
-    toast(skip>0?`✅ ${total>1?total+'개 파일 · ':''}${nr.length}개 추가 (중복 ${skip}개 제외)`:`✅ ${nr.length}개 로드 완료`,'ok');
-    if(errs.length) toast(`⚠️ 파싱 실패: ${errs.join(', ')}`,'wa');
-  };
-  files.forEach(file=>{
-    const ext=file.name.split('.').pop().toLowerCase();
-    const rd=new FileReader();
-    rd.onload=function(ev){
-      try{
-        let raw;
-        if(ext==='csv'){ const wb=XLSX.read(ev.target.result,{type:'string'}); raw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{raw:false,defval:''});}
-        else{ const wb=XLSX.read(ev.target.result,{type:'array'}); raw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{raw:false,defval:''});}
-        if(raw.length){
-          const headers=Object.keys(raw[0]),cm=detectCols(headers),base=Date.now()+Math.random()*1e9;
-          raw.forEach((row,i)=>all.push({
-            id:base+i,company:tr(row[cm.company]||row[headers[0]]||`기업${i+1}`),
-            industry:tr(row[cm.industry]||''),contact:tr(row[cm.contact]||''),
-            email:tr(row[cm.email]||'').toLowerCase(),phone:tr(row[cm.phone]||''),
-            service:tr(row[cm.service]||''),stage:nStage(row[cm.stage]||''),
-            memo:tr(row[cm.memo]||''),date:tr(row[cm.date]||''),
-            region:nRegion(row[cm.region]||''),size:nSize(row[cm.size]||''),
-            budget:pBudget(row[cm.budget]||''),website:nUrl(row[cm.website]||''),
-            nextAction:tr(row[cm.nextAction]||''),mailDate:tr(row[cm.mailDate]||''),
-            link:tr(row[cm.link]||''),
-            crawlStatus:'wait',postType:'',summary:'',needScore:0,needLevel:'',budgetText:'',approachMsg:'',timeline:[],
-          }));
-        }
-      }catch(err){ errs.push(file.name); }
-      if(++done===total) finish();
-    };
-    rd.onerror=()=>{ errs.push(file.name); if(++done===total) finish(); };
-    ext==='csv'?rd.readAsText(file,'UTF-8'):rd.readAsArrayBuffer(file);
+  const parsed = raw.map((row, i) => {
+    const company  = tr(row[cm.company]  || row[headers[0]] || `기업${i+1}`);
+    const email    = tr(row[cm.email]    || '').toLowerCase();
+    const rawInd   = tr(row[cm.industry] || '');
+    const rawPri   = tr(row[cm.priority] || '');
+    const ind      = classifyInd(company, rawInd);
+    const priority = classifyPriority(rawPri, ind);
+    const hasEmail = email.includes('@');
+    const done     = doneSet.has(company);
+    return { id: i, company, email, ind, priority, hasEmail, done, rawInd };
+  });
+
+  DB = sortDB(parsed);
+  saveData();
+  renderAll();
+  showToast(`✅ ${DB.length}개 기업 로드 완료`);
+  loadBookmark();
+}
+
+function sortDB(data) {
+  return [...data].sort((a, b) => {
+    // done → bottom
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    // no email → near bottom
+    if (a.hasEmail !== b.hasEmail) return a.hasEmail ? -1 : 1;
+    // high → mid
+    const pr = { high: 0, mid: 1 };
+    return (pr[a.priority] ?? 2) - (pr[b.priority] ?? 2);
   });
 }
 
-// ════════════════════════════════
-// NORMALIZERS
-// ════════════════════════════════
-const tr=v=>String(v||'').trim();
-function nStage(s){
-  const v=String(s).toLowerCase().trim(); if(!v) return '미접촉';
-  if(['메일','mail','email','발송'].some(x=>v.includes(x))) return '메일발송';
-  if(['응답','reply','response','회신'].some(x=>v.includes(x))) return '응답';
-  if(['미팅','meeting','방문'].some(x=>v.includes(x))) return '미팅';
-  if(['계약','contract','성사','완료'].some(x=>v.includes(x))) return '계약';
-  if(['거절','reject','no','패스','불가'].some(x=>v.includes(x))) return '거절';
-  return '미접촉';
-}
-function nRegion(s){
-  const v=String(s).trim(); if(!v) return '';
-  const map={'서울':['서울','Seoul','강남','강북','종로','마포','영등포','송파','강서'],'경기':['경기','수원','성남','안양','용인','고양','부천','광명'],'인천':['인천'],'부산':['부산'],'대구':['대구'],'대전':['대전'],'광주':['광주'],'울산':['울산'],'세종':['세종'],'강원':['강원','춘천','원주'],'충남':['충남','천안','아산'],'충북':['충북','청주'],'전남':['전남','목포','여수'],'전북':['전북','전주','익산'],'경남':['경남','창원','진주'],'경북':['경북','포항','구미'],'제주':['제주']};
-  for(const[k,al] of Object.entries(map)){ if(al.some(a=>v.includes(a))) return k; }
-  return v.length>4?v.slice(0,2):v;
-}
-function nSize(s){
-  const v=String(s).toLowerCase().trim(); if(!v) return '';
-  if(['대기업','large','enterprise'].some(x=>v.includes(x))) return '대기업';
-  if(['중견','mid'].some(x=>v.includes(x))) return '중견기업';
-  if(['중소','small','sme'].some(x=>v.includes(x))) return '중소기업';
-  if(['스타트업','startup','소형'].some(x=>v.includes(x))) return '스타트업';
-  const n=parseInt(v.replace(/[^0-9]/g,''));
-  if(!isNaN(n)){ if(n>=1000)return '대기업'; if(n>=300)return '중견기업'; if(n>=50)return '중소기업'; return '스타트업'; }
-  return '';
-}
-function pBudget(s){ if(!s) return 0; const v=String(s).replace(/[,원₩\s]/g,'').replace(/억/,'00000000').replace(/천만/,'10000000').replace(/만/,'0000'); return parseInt(v.replace(/[^0-9]/g,''))||0; }
-function nUrl(s){ const v=String(s).trim(); if(!v) return ''; if(v.startsWith('http')) return v; if(v.includes('.')) return 'https://'+v; return ''; }
-function fBudget(n){ if(!n) return ''; if(n>=100000000) return `${(n/100000000).toFixed(1)}억`; if(n>=10000) return `${Math.round(n/10000)}만`; return n.toLocaleString()+'원'; }
-function fBTotal(n){ if(!n) return '—'; if(n>=100000000) return `${(n/100000000).toFixed(1)}억원`; if(n>=10000000) return `${(n/10000000).toFixed(1)}천만원`; if(n>=10000) return `${Math.round(n/10000)}만원`; return n.toLocaleString()+'원'; }
+function tr(v) { return String(v || '').trim(); }
 
-// ════════════════════════════════
-// DATE HELPERS
-// ════════════════════════════════
-function pDate(s){ if(!s) return null; const p=String(s).replace(/\./g,'-').split('-').map(Number); if(p.length<3) return null; const d=new Date(p[0],p[1]-1,p[2]); return isNaN(d.getTime())?null:d; }
-function daysDiff(s){ const d=pDate(s); if(!d) return null; return Math.floor((Date.now()-d.getTime())/86400000); }
-function mailFollowup(d){ if(['응답','계약','거절'].includes(d.stage)) return null; const src=d.mailDate||(d.stage==='메일발송'?d.date:''); const days=daysDiff(src); if(days===null) return null; if(days>=7) return {label:`${days}일 경과`,cls:'fu-7',type:'7'}; if(days>=3) return {label:`${days}일 경과`,cls:'fu-3',type:'3'}; return null; }
-function naStatus(s){ if(!s) return null; const d=pDate(s); if(!d) return null; const today=new Date(); today.setHours(0,0,0,0); const diff=Math.floor((d-today)/86400000); if(diff<0) return {label:`D+${Math.abs(diff)}`,cls:'na-today'}; if(diff===0) return {label:'오늘',cls:'na-today'}; if(diff<=7) return {label:`D-${diff}`,cls:'na-week'}; return {label:`D-${diff}`,cls:'na-future'}; }
-function isClosable(d){ return d.email&&['응답','미팅'].includes(d.stage); }
-function todayStr(){ return new Date().toLocaleDateString('ko-KR'); }
-
-// Week dates
-function getWeekDates(){
-  const now=new Date(), day=now.getDay();
-  const mon=new Date(now); mon.setDate(now.getDate()-(day===0?6:day-1));
-  const wed=new Date(mon); wed.setDate(mon.getDate()+2);
-  const fri=new Date(mon); fri.setDate(mon.getDate()+4);
-  const fmt=d=>`${d.getMonth()+1}/${d.getDate()} ${['일','월','화','수','목','금','토'][d.getDay()]}`;
-  const isToday=d=>d.toDateString()===now.toDateString();
-  return [{d:mon,label:fmt(mon),today:isToday(mon)},{d:wed,label:fmt(wed),today:isToday(wed)},{d:fri,label:fmt(fri),today:isToday(fri)}];
-}
-
-// ════════════════════════════════
-// ACTIVITY LOG
-// ════════════════════════════════
-function addActivity(company, action, color='#5C3DE8'){
-  activityLog.unshift({time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),company,action,color});
-  if(activityLog.length>10) activityLog.pop();
-  renderActivityLog();
-}
-function renderActivityLog(){
-  const el=g('actLog'); if(!el) return;
-  if(!activityLog.length){ el.innerHTML='<div class="ndm">활동 내역이 없습니다</div>'; return; }
-  el.innerHTML=activityLog.map(a=>`
-    <div class="act-item">
-      <span class="act-dot" style="background:${a.color}"></span>
-      <span style="flex:1;font-weight:600">${eh(a.company)}</span>
-      <span style="color:var(--t2)">${eh(a.action)}</span>
-      <span class="act-time">${a.time}</span>
-    </div>`).join('');
-}
-
-// ════════════════════════════════
-// GOALS
-// ════════════════════════════════
-function loadGoals(){ try{ const s=localStorage.getItem('aicut_goals'); if(s){ const g2=JSON.parse(s); g('goalMailTgt').value=g2.mail||10; g('goalRespTgt').value=g2.resp||3; g('goalMeetTgt').value=g2.meet||2; g('goalContTgt').value=g2.cont||1; } }catch(e){} }
-function saveGoals(){ try{ localStorage.setItem('aicut_goals',JSON.stringify({mail:+g('goalMailTgt').value,resp:+g('goalRespTgt').value,meet:+g('goalMeetTgt').value,cont:+g('goalContTgt').value})); }catch(e){} }
-function renderGoals(){
-  // Count this week's activity
-  const sent=DB.filter(d=>['메일발송','응답','미팅','계약'].includes(d.stage)).length;
-  const resp=DB.filter(d=>['응답','미팅','계약'].includes(d.stage)).length;
-  const meet=DB.filter(d=>d.stage==='미팅').length;
-  const cont=DB.filter(d=>d.stage==='계약').length;
-  const pairs=[['goalMail',sent,'#2563EB'],['goalResp',resp,'#5C3DE8'],['goalMeet',meet,'#D97706'],['goalCont',cont,'#059669']];
-  pairs.forEach(([id,cur,col])=>{
-    const tgt=+g(id+'Tgt').value||1;
-    const pct=Math.min(Math.round(cur/tgt*100),100);
-    g(id+'Cur').textContent=cur;
-    const fill=g(id+'Fill'); fill.style.width=pct+'%'; fill.style.background=col;
-  });
-}
-
-// ════════════════════════════════
-// SAVE / LOAD
-// ════════════════════════════════
-async function save(){
-  localStorage.setItem('aicut_v6',JSON.stringify(DB));
-  if(window.fsSave) await window.fsSave(DB);
-}
-async function load(){
-  if(!window.fsLoad){ await new Promise(r=>{ const t=setTimeout(r,4000); window.addEventListener('firebase-ready',()=>{clearTimeout(t);r();},{once:true}); }); }
-  try{
-    let data=window.fsLoad?await window.fsLoad():[];
-    if(!data.length){ const s=localStorage.getItem('aicut_v6')||localStorage.getItem('aicut_v5')||localStorage.getItem('aicut_v4'); if(s) data=JSON.parse(s); }
-    if(data.length){
-      DB=data.map(d=>({timeline:[],crawlStatus:'wait',postType:'',summary:'',needScore:0,needLevel:'',budgetText:'',approachMsg:'',...d}));
-      updateAll();
-      g('upzone').style.display='none';
-      g('crawlBtn').disabled=!DB.some(d=>d.link&&d.link.startsWith('http'));
-      if(window.fsListen) window.fsListen(r=>{ DB=r.map(d=>({timeline:[],crawlStatus:'wait',postType:'',summary:'',needScore:0,needLevel:'',budgetText:'',approachMsg:'',...d})); updateAll(); });
-    }
-  }catch(e){ console.error(e); }
-}
-
-// ════════════════════════════════
-// UPDATE ALL
-// ════════════════════════════════
-function updateAll(){ kpis(); buildCharts(); renderCards(); buildPlan(); updAlert(); updToday(); renderGoals(); renderIndChips(); renderActivityLog(); }
-
-// ════════════════════════════════
-// TODAY
-// ════════════════════════════════
-function updToday(){
-  const today=new Date(); today.setHours(0,0,0,0);
-  g('todayDate').textContent=today.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
-  const items=[];
-  DB.forEach(d=>{
-    if(d.needLevel==='high'&&d.stage==='미접촉') items.push({d,tag:'🔥 HIGH',cls:'tag-high',reason:'즉시 영업 대상'});
-    const nas=naStatus(d.nextAction); if(nas?.cls==='na-today') items.push({d,tag:'오늘 액션',cls:'tag-today',reason:d.nextAction});
-    const fu=mailFollowup(d); if(fu?.type==='7') items.push({d,tag:'팔로업 지연',cls:'tag-high',reason:fu.label});
-    if(isClosable(d)&&d.stage==='미팅') items.push({d,tag:'계약 임박',cls:'tag-close',reason:'미팅 단계'});
-  });
-  g('todayCnt').textContent=`${items.length}건`;
-  if(!items.length){ g('todayList').innerHTML='<span style="font-size:11px;color:var(--t3)">오늘 처리할 항목이 없습니다 🎉</span>'; return; }
-  g('todayList').innerHTML=items.slice(0,10).map(it=>`
-    <div class="ti" onclick="swTab('companies',document.querySelectorAll('.tb')[1]);setTimeout(()=>hlCard(${it.d.id}),100)">
-      <span class="ti-tag ${it.cls}">${it.tag}</span>
-      <span class="ti-nm">${eh(it.d.company)}</span>
-      <span style="font-size:10px;color:var(--t3)">${eh(it.reason)}</span>
-    </div>`).join('');
-}
-
-// ════════════════════════════════
-// INDUSTRY CHIPS (dashboard)
-// ════════════════════════════════
-function renderIndChips(){
-  const hired=DB.filter(d=>d.postType==='채용');
-  const cnt={};
-  hired.forEach(d=>{ const ind=d.industry||'미분류'; cnt[ind]=(cnt[ind]||0)+1; });
-  const sorted=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const el=g('indChips'); if(!el) return;
-  if(!sorted.length){ el.innerHTML='<span style="font-size:11px;color:var(--t3)">채용 공고 데이터 없음</span>'; return; }
-  el.innerHTML=`<button class="ind-chip ${indFilter===''?'on':''}" onclick="setIndFilter('',this)">전체 ${hired.length}건</button>`
-    +sorted.map(([ind,c])=>`<button class="ind-chip ${indFilter===ind?'on':''}" onclick="setIndFilter('${ind}',this)">${eh(ind)} ${c}</button>`).join('');
-}
-function setIndFilter(ind, btn){
-  indFilter=ind;
-  document.querySelectorAll('.ind-chip').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  // Switch to companies tab and filter
-  swTab('companies',document.querySelectorAll('.tb')[1]);
+// ══════════════════════════════════
+// RENDER
+// ══════════════════════════════════
+function renderAll() {
+  updateStats();
+  updateTabCounts();
   renderCards();
 }
 
-// ════════════════════════════════
-// KPIs
-// ════════════════════════════════
-function kpis(){
-  const n=DB.length,high=DB.filter(d=>d.needLevel==='high').length,mid=DB.filter(d=>d.needLevel==='mid').length,
-    cont=DB.filter(d=>d.stage==='계약').length,sent=DB.filter(d=>['메일발송','응답','미팅','계약'].includes(d.stage)).length,
-    od=DB.filter(d=>mailFollowup(d)?.type==='7').length,we=DB.filter(d=>d.email).length,
-    crawled=DB.filter(d=>d.crawlStatus==='done').length,hire=DB.filter(d=>d.postType==='채용').length,out=DB.filter(d=>d.postType==='외주').length;
-  an('k0',n);an('k_high',high);an('k_mid',mid);an('k4',cont);an('k7',od);
-  an('k_crawled',crawled);an('k_hire',hire);an('k_out',out);
-  const er=Math.round(we/(n||1)*100);
-  if(g('k5')) g('k5').textContent=er+'%';
-  if(g('k5s')) g('k5s').textContent=`${we}/${n}`;
-  if(g('k4s')) g('k4s').textContent=`성사율 ${sent>0?Math.round(cont/sent*100):0}%`;
-  // card filter counts
-  if(g('cf-high-cnt')) g('cf-high-cnt').textContent=high;
-  if(g('cf-mid-cnt'))  g('cf-mid-cnt').textContent=mid;
-  if(g('cf-all-cnt'))  g('cf-all-cnt').textContent=n;
-  // funnel
-  const stages=['미접촉','메일발송','응답','미팅','계약'],cols=['#9592B0','#2563EB','#5C3DE8','#D97706','#059669'],
-    cnts=stages.map(s=>DB.filter(d=>d.stage===s).length),mx=Math.max(...cnts,1);
-  g('fnViz').innerHTML=stages.map((s,i)=>{ const pct=Math.round(cnts[i]/(n||1)*100),w=Math.round(cnts[i]/mx*100); return `<div class="fn-row"><span class="fn-lbl">${s}</span><div class="fn-wrap"><div class="fn-bar" style="width:${w}%;background:${cols[i]}"><span>${cnts[i]}개</span></div></div><span class="fn-pct">${pct}%</span></div>`; }).join('');
-  // quality
-  const qi=[{name:'이메일 보유',val:er,col:'#5C3DE8'},{name:'연락처 보유',val:Math.round(DB.filter(d=>d.phone).length/(n||1)*100),col:'#7C3AED'},{name:'링크 보유',val:Math.round(DB.filter(d=>d.link).length/(n||1)*100),col:'#2563EB'},{name:'크롤링 완료',val:Math.round(crawled/(n||1)*100),col:'#059669'},{name:'업종 입력',val:Math.round(DB.filter(d=>d.industry).length/(n||1)*100),col:'#0891B2'},{name:'지역 입력',val:Math.round(DB.filter(d=>d.region).length/(n||1)*100),col:'#D97706'}];
-  g('qlViz').innerHTML=qi.map(q=>`<div class="ql-row"><div class="ql-meta"><span class="ql-name">${q.name}</span><span class="ql-val" style="color:${q.col}">${q.val}%</span></div><div class="ql-track"><div class="ql-fill" style="width:${q.val}%;background:${q.col}"></div></div></div>`).join('');
-}
-function an(id,target){ const e=g(id); if(!e) return; const s=parseInt(e.textContent)||0; const t0=Date.now(); const tick=()=>{ const p=Math.min((Date.now()-t0)/500,1); const ep=1-Math.pow(1-p,3); e.textContent=Math.round(s+(target-s)*ep); if(p<1)requestAnimationFrame(tick); }; tick(); }
-function g(id){ return document.getElementById(id); }
-
-// ════════════════════════════════
-// CHARTS
-// ════════════════════════════════
-const CC=['#5C3DE8','#2563EB','#059669','#D97706','#DC2626','#7C3AED','#0891B2','#16A34A','#EA580C','#DB2777'];
-function buildCharts(){ bPie(); bScore(); bBar(); }
-function bPie(){ const ctx=g('cPie').getContext('2d'); const cnt={}; DB.forEach(d=>{if(d.industry)cnt[d.industry]=(cnt[d.industry]||0)+1;}); const lbs=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,9); if(ch.pie)ch.pie.destroy(); ch.pie=new Chart(ctx,{type:'doughnut',data:{labels:lbs.length?lbs:['데이터 없음'],datasets:[{data:lbs.length?lbs.map(l=>cnt[l]):[1],backgroundColor:CC,borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#4B4873',font:{size:10,family:'Pretendard'},padding:8,usePointStyle:true}}},cutout:'62%'}}); }
-function bScore(){ const ctx=g('cScore').getContext('2d'); const h=DB.filter(d=>d.needLevel==='high').length,m=DB.filter(d=>d.needLevel==='mid').length,l=DB.filter(d=>d.needLevel==='low'&&d.crawlStatus==='done').length; if(ch.score)ch.score.destroy(); ch.score=new Chart(ctx,{type:'doughnut',data:{labels:['🔥 HIGH','⭐ MID','LOW','미분석'],datasets:[{data:[h,m,l,DB.length-h-m-l],backgroundColor:['#DC2626','#D97706','#9592B0','#E5E7EB'],borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#4B4873',font:{size:10,family:'Pretendard'},padding:8,usePointStyle:true}}},cutout:'60%'}}); }
-function bBar(){ const ctx=g('cBar').getContext('2d'); const stages=['미접촉','메일발송','응답','미팅','계약','거절'],cols=['#9592B0','#2563EB','#5C3DE8','#D97706','#059669','#DC2626']; if(ch.bar)ch.bar.destroy(); ch.bar=new Chart(ctx,{type:'bar',data:{labels:stages,datasets:[{data:stages.map(s=>DB.filter(d=>d.stage===s).length),backgroundColor:cols,borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#9592B0',font:{size:10}}},y:{grid:{color:'rgba(92,61,232,.07)'},ticks:{color:'#9592B0',font:{size:10}},beginAtZero:true}}}}); }
-
-// ════════════════════════════════
-// CARDS
-// ════════════════════════════════
-function setCardFilter(f, btn){
-  cardFilter=f;
-  document.querySelectorAll('.cf-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  renderCards();
-}
-function hlCard(id){
-  const el=g('card-'+id); if(!el) return;
-  el.scrollIntoView({behavior:'smooth',block:'center'});
-  el.classList.add('hl');
-  setTimeout(()=>el.classList.remove('hl'),2000);
+function updateStats() {
+  const withEmail = DB.filter(d => d.hasEmail).length;
+  const done = DB.filter(d => d.done).length;
+  const left = DB.filter(d => d.hasEmail && !d.done).length;
+  g('statEmail').textContent = withEmail;
+  g('statDone').textContent  = done;
+  g('statLeft').textContent  = left;
 }
 
-// Default approach message
-const DEFAULT_MSG=(company)=>`안녕하세요, ${company} 담당자님.
-영상 편집 관련해서 연락드렸어요.
-에이컷은 소스 파일만 주시면
-전담 에디터가 바로 편집해드리는 서비스예요.
-대량/반복 작업도 월정액으로 편하게 해결되고요.
-샘플 1편 무료로 먼저 확인해보세요.
-→ aicut.co.kr`;
-
-function renderCards(){
-  const q=g('cardSrch')?.value.toLowerCase()||'';
-  let data=[...DB];
-
-  // filter by card tab
-  if(cardFilter==='high') data=data.filter(d=>d.needLevel==='high');
-  else if(cardFilter==='mid') data=data.filter(d=>d.needLevel==='mid');
-
-  // industry filter from dashboard chips
-  if(indFilter) data=data.filter(d=>d.industry===indFilter);
-
-  // search
-  if(q) data=data.filter(d=>d.company.toLowerCase().includes(q)||(d.industry||'').toLowerCase().includes(q)||(d.summary||'').toLowerCase().includes(q));
-
-  // sort: high → mid → low, then by score
-  data.sort((a,b)=>{
-    const rank={high:0,mid:1,low:2,'':3};
-    return (rank[a.needLevel]||3)-(rank[b.needLevel]||3)||(b.needScore-a.needScore);
+function updateTabCounts() {
+  const inds = ['전체','교육','부동산','이커머스','프랜차이즈','병원','미디어','광고','기타'];
+  const active = DB.filter(d => !d.done && d.hasEmail);
+  inds.forEach(ind => {
+    const el = g('cnt-' + ind);
+    if (!el) return;
+    const cnt = ind === '전체' ? active.length : active.filter(d => d.ind === ind).length;
+    el.textContent = cnt;
   });
+}
 
-  const grid=g('cardsGrid');
-  if(!data.length){
-    grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="ic">🔍</div><h3>결과 없음</h3><p>${DB.length?'검색 조건을 변경해보세요':'엑셀 파일을 업로드하면 카드가 표시됩니다'}</p></div>`;
+function renderCards() {
+  const list = g('cardList');
+  let data = currentTab === '전체' ? DB : DB.filter(d => d.ind === currentTab);
+
+  if (!data.length && DB.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="ic">📂</div>
+      <h3>엑셀 파일을 업로드하세요</h3>
+      <p>회사명, 이메일 컬럼이 포함된<br>.xlsx 또는 .csv 파일을 올려주세요</p>
+    </div>`;
     return;
   }
 
-  grid.innerHTML=data.map(d=>{
-    const nas=naStatus(d.nextAction), fu=mailFollowup(d), cl=isClosable(d)&&d.stage==='미팅';
-    const borderCls=d.needLevel==='high'?'high':d.needLevel==='mid'?'mid':d.stage==='계약'?'done':'';
-    const scoreBadge=d.needLevel==='high'?`<span class="score-high">🔥 HIGH ${d.needScore}pt</span>`:d.needLevel==='mid'?`<span class="score-mid">⭐ MID ${d.needScore}pt</span>`:d.crawlStatus==='done'?`<span class="score-low">LOW ${d.needScore}pt</span>`:d.crawlStatus==='manual'?`<span class="score-low" style="color:#D97706;background:#FEF3C7">👁 수동확인</span>`:d.crawlStatus==='crawling'?`<span class="score-low" style="color:#D97706">⟳ 분석중</span>`:`<span class="score-low">대기</span>`;
-    const typeBadge=d.postType==='채용'?'<span class="type-hire">채용공고</span>':d.postType==='외주'?'<span class="type-out">외주공고</span>':d.link?'<span class="type-gen">공고있음</span>':'';
-    const urgTag=fu?.type==='7'?`<span class="score-high">🚨 지연</span>`:fu?.type==='3'?`<span class="score-mid">⏰ 팔로업</span>`:nas?.cls==='na-today'?`<span class="na-badge na-today">${nas.label}</span>`:nas?.cls==='na-week'?`<span class="na-badge na-week">${nas.label}</span>`:'';
-    const emailRow=d.email
-      ?`<span class="email-ok">✅ ${eh(d.email)}</span>`
-      :`<span class="email-no">❌ 이메일 없음</span>`;
-    const stageCol={'미접촉':'#7B78A8','메일발송':'#2563EB','응답':'#5C3DE8','미팅':'#D97706','계약':'#059669','거절':'#DC2626'};
+  if (!data.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="ic">🔍</div>
+      <h3>해당 업종 기업이 없습니다</h3>
+      <p>다른 탭을 선택해보세요</p>
+    </div>`;
+    return;
+  }
 
-    return `<div class="company-card ${borderCls}" id="card-${d.id}" onclick="openPanel(${d.id})">
-      <div class="card-top">
-        <div class="card-badges">
-          ${scoreBadge}
-          ${typeBadge}
-          ${urgTag}
-          ${cl?'<span class="close-tag">🔥 계약 임박</span>':''}
+  // global serial number across full DB
+  list.innerHTML = data.map(d => {
+    const globalNum = DB.indexOf(d) + 1;
+    const isSelected = d.id === selectedId;
+    const priLabel = d.priority === 'high'
+      ? '<span class="badge badge-high">🔥HIGH</span>'
+      : '<span class="badge badge-mid">⭐MID</span>';
+    const indLabel = `<span class="badge badge-ind">${d.ind}</span>`;
+    const doneLabel = d.done ? '<span class="badge badge-done">✅ 발송완료</span>' : '';
+    const noEmailLabel = !d.hasEmail ? '<span class="badge badge-noemail">이메일없음</span>' : '';
+
+    const cardClass = [
+      'company-card',
+      isSelected ? 'selected' : '',
+      d.done ? 'done' : '',
+      !d.hasEmail ? 'no-email' : '',
+    ].filter(Boolean).join(' ');
+
+    const btnClass = d.done ? 'done-btn is-done' : 'done-btn';
+    const btnText  = d.done ? '✅ 발송완료' : '발송완료';
+
+    return `<div class="${cardClass}" id="card-${d.id}" onclick="selectCard(${d.id})">
+      <div class="card-num">${globalNum}</div>
+      <div class="card-body">
+        <div class="card-top">
+          ${!d.done && d.hasEmail ? priLabel : ''}
+          ${indLabel}
+          ${doneLabel}${noEmailLabel}
         </div>
-        <span class="sb s-${d.stage}" style="font-size:10px">
-          <select class="ss-sel" onchange="upStage(${d.id},this.value);event.stopPropagation()" onclick="event.stopPropagation()" style="color:${stageCol[d.stage]||'inherit'}">${['미접촉','메일발송','응답','미팅','계약','거절'].map(s=>`<option value="${s}"${d.stage===s?' selected':''}>${s}</option>`).join('')}</select>
-        </span>
+        <div class="card-name">${esc(d.company)}</div>
+        <div class="card-email">${d.hasEmail ? esc(d.email) : '이메일 정보 없음'}</div>
       </div>
-      <div class="card-name">${eh(d.company)}</div>
-      <div class="card-summary">${eh(d.summary||[d.industry,d.size,d.region].filter(Boolean).join(' · '))||'—'}</div>
-      <div class="card-email-row">${emailRow}${d.budgetText?`<span style="font-size:10px;color:var(--t3);margin-left:4px">· ${eh(d.budgetText)}</span>`:''}</div>
-      <div class="card-actions" onclick="event.stopPropagation()">
-        ${d.link?`<a class="card-btn" href="${eh(d.link)}" target="_blank" rel="noopener">🔗 공고보기</a>`:''}
-        <button class="card-btn primary" id="copybtn-${d.id}" onclick="quickCopy(${d.id})">📋 메시지복사</button>
-        <button class="card-btn" onclick="openPanel(${d.id})">상세 →</button>
-      </div>
+      ${d.hasEmail ? `<button class="${btnClass}" onclick="toggleDone(event,${d.id})">${btnText}</button>` : ''}
     </div>`;
   }).join('');
 }
 
-// ── Quick Copy (메시지 복사 + 자동 처리) ──
-async function quickCopy(id){
-  const d=DB.find(x=>x.id===id); if(!d) return;
-  const msg=d.approachMsg||DEFAULT_MSG(d.company);
-
-  try{ await navigator.clipboard.writeText(msg); } catch(e){ toast('복사 실패 — 직접 선택하세요','wa'); return; }
-
-  // 버튼 상태 변경
-  const btn=g('copybtn-'+id);
-  if(btn){ btn.textContent='✅ 복사됨'; btn.classList.add('copy-ok'); setTimeout(()=>{ btn.textContent='📋 메시지복사'; btn.classList.remove('copy-ok'); },1500); }
-
-  // 영업 단계 → 메일발송 자동 변경
-  const idx=DB.findIndex(x=>x.id===id); if(idx<0) return;
-  if(DB[idx].stage==='미접촉'){
-    DB[idx].stage='메일발송';
-    DB[idx].date=todayStr();
-    DB[idx].mailDate=todayStr();
-    // 팔로업 D+3 자동 등록
-    const followDate=new Date(); followDate.setDate(followDate.getDate()+3);
-    DB[idx].nextAction=followDate.toLocaleDateString('ko-KR');
-    if(!DB[idx].timeline) DB[idx].timeline=[];
-    DB[idx].timeline.push({date:todayStr(),text:'메시지 복사 → 메일발송 처리 (자동)'});
-    addActivity(d.company,'메일발송 처리','#2563EB');
-    // Firebase
-    if(window.fsActivityLog) window.fsActivityLog(id,'메일발송');
-    else if(window.fsUpdate) window.fsUpdate(id,{stage:'메일발송',mailDate:todayStr(),date:todayStr()});
-    save(); updateAll();
-  }
-  toast('📋 메시지 복사됨 → 메일발송 처리','ok');
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ════════════════════════════════
-// STAGE / MEMO updates
-// ════════════════════════════════
-function upStage(id,val){
-  const i=DB.findIndex(d=>d.id===id); if(i<0) return;
-  const prev=DB[i].stage; DB[i].stage=val; DB[i].date=todayStr();
-  if(!DB[i].timeline) DB[i].timeline=[];
-  DB[i].timeline.push({date:todayStr(),text:`단계 변경: ${prev} → ${val}`});
-  addActivity(DB[i].company,`${prev} → ${val}`);
-  // Firebase: salesStage, lastContactDate, activityLog
-  if(window.fsActivityLog) window.fsActivityLog(id,val);
-  else if(window.fsUpdate) window.fsUpdate(id,{salesStage:val,lastContactDate:todayStr(),stage:val,date:todayStr()});
-  save(); updateAll(); if(panelId===id) openPanel(id);
-}
-function upMemo(id,val){ const i=DB.findIndex(d=>d.id===id); if(i<0) return; DB[i].memo=val; if(window.fsUpdate) window.fsUpdate(id,{memo:val}); else save(); }
-function upMailDate(id,val){ const i=DB.findIndex(d=>d.id===id); if(i<0) return; DB[i].mailDate=val; if(DB[i].stage==='미접촉'){DB[i].stage='메일발송';DB[i].date=todayStr();} save(); updateAll(); }
-function upNextAction(id,val){ const i=DB.findIndex(d=>d.id===id); if(i<0) return; DB[i].nextAction=val; save(); updateAll(); }
+// ══════════════════════════════════
+// SELECT & MAIL PANEL
+// ══════════════════════════════════
+function selectCard(id) {
+  const d = DB.find(x => x.id === id);
+  if (!d || d.done || !d.hasEmail) return;
 
-// ════════════════════════════════
-// DETAIL PANEL
-// ════════════════════════════════
-function openPanel(id){
-  const d=DB.find(x=>x.id===id); if(!d) return;
-  panelId=id;
-  g('dpNm').textContent=d.company;
-  const fu=mailFollowup(d), nas=naStatus(d.nextAction);
-  const msg=d.approachMsg||DEFAULT_MSG(d.company);
-  g('dpBody').innerHTML=`
-    <div class="dp-grid2">
-      <div><div class="dp-lbl">업종</div><div style="font-size:12px">${eh(d.industry)||'—'}</div></div>
-      <div><div class="dp-lbl">규모</div><div style="font-size:12px">${d.size||'—'}</div></div>
-      <div><div class="dp-lbl">이메일</div><div style="font-size:11px">${d.email?`<a class="lnk" href="mailto:${eh(d.email)}">${eh(d.email)}</a>`:'❌ 없음'}</div></div>
-      <div><div class="dp-lbl">연락처</div><div style="font-size:11px">${d.phone||'—'}</div></div>
-    </div>
-    ${d.link?`<div><div class="dp-lbl">원본 링크</div><a class="lnk" href="${eh(d.link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:5px 10px;background:rgba(92,61,232,.07);border:1px solid rgba(92,61,232,.2);border-radius:6px;font-size:12px">🔗 공고 원문 보기</a></div>`:''}
-    ${d.postType?`<div><div class="dp-lbl">공고 요약</div><div style="font-size:12px;margin-top:3px">${d.postType==='채용'?'<span class="type-hire">채용공고</span>':'<span class="type-out">외주공고</span>'} ${eh(d.summary)}</div></div>`:''}
-    ${fu?`<div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:7px;padding:8px 11px;font-size:11px;color:#92400E;font-weight:600">⚠️ 팔로업 ${fu.type==='7'?'지연':'권장'}: ${fu.label}</div>`:''}
-    ${isClosable(d)&&d.stage==='미팅'?`<div style="background:#ECFDF5;border:1px solid rgba(5,150,105,.3);border-radius:7px;padding:8px 11px;font-size:11px;color:#059669;font-weight:600">🔥 계약 임박</div>`:''}
-    <div><div class="dp-lbl">영업 단계</div><select class="dp-sel" onchange="upStage(${d.id},this.value)">${['미접촉','메일발송','응답','미팅','계약','거절'].map(s=>`<option value="${s}"${d.stage===s?' selected':''}>${s}</option>`).join('')}</select></div>
-    <div class="dp-grid2">
-      <div><div class="dp-lbl">메일 발송일</div><input class="dp-inp" type="date" value="${eh(d.mailDate)}" onchange="upMailDate(${d.id},this.value)"></div>
-      <div><div class="dp-lbl">다음 액션일 ${nas?`<span class="na-badge ${nas.cls}" style="margin-left:3px">${nas.label}</span>`:''}</div><input class="dp-inp" type="date" value="${eh(d.nextAction)}" onchange="upNextAction(${d.id},this.value)"></div>
-    </div>
-    <div><div class="dp-lbl">추천 접근 메시지</div><div class="dp-msg-box" style="margin-top:4px">${eh(msg)}</div><div class="dp-copy" onclick="quickCopy(${d.id})">📋 클립보드 복사 (자동 처리 포함)</div></div>
-    <div><div class="dp-lbl">메모</div><textarea class="dp-ta" id="dpMemo" onblur="upMemo(${d.id},this.value)">${eh(d.memo)}</textarea></div>
-    <div><div class="dp-lbl">접촉 이력</div><div class="tl" style="margin-top:4px">${buildTl(d)}</div></div>
-    <button class="dp-save" onclick="savePanelMemo(${d.id})">💾 저장</button>
-  `;
-  g('dpov').classList.add('op');
-}
-function buildTl(d){ const items=[]; if(d.date) items.push({date:d.date,text:`마지막 접촉: ${d.stage}`}); if(d.mailDate) items.push({date:d.mailDate,text:'콜드메일 발송'}); if(d.timeline&&d.timeline.length) items.push(...d.timeline); items.sort((a,b)=>new Date(b.date)-new Date(a.date)); if(!items.length) return '<div style="font-size:11px;color:var(--t3)">이력 없음</div>'; return items.map(it=>`<div class="tl-i"><div class="tl-dot"></div><div class="tl-ct"><div class="tl-dt">${eh(it.date)}</div><div class="tl-tx">${eh(it.text)}</div></div></div>`).join(''); }
-function savePanelMemo(id){ const val=g('dpMemo').value; upMemo(id,val); const i=DB.findIndex(d=>d.id===id); if(i<0) return; if(!DB[i].timeline) DB[i].timeline=[]; if(val) DB[i].timeline.push({date:todayStr(),text:`메모: ${val}`}); save(); openPanel(id); toast('✅ 저장 완료','ok'); }
-function closePanel(){ g('dpov').classList.remove('op'); panelId=null; }
-function eh(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  selectedId = id;
+  renderCards(); // re-highlight
+  renderMailPanel(d);
 
-// ════════════════════════════════
-// OD ALERT
-// ════════════════════════════════
-function updAlert(){ const ods=DB.filter(d=>mailFollowup(d)?.type==='7'),btn=g('alertBtn'); if(ods.length){btn.classList.add('show');g('alertTx').textContent=`팔로업 ${ods.length}건`;}else btn.classList.remove('show'); }
-function openOdModal(){ const ods=DB.filter(d=>mailFollowup(d)?.type==='7'); g('odList').innerHTML=ods.map(d=>{const fu=mailFollowup(d);return `<div class="mr"><div class="mri"><div class="mrn">${eh(d.company)}</div><div class="mrm">${eh(d.email)} · ${fu.label}</div></div><button class="mab" onclick="qStage(${d.id},'응답')">응답 처리</button></div>`;}).join('')||'<div class="ndm">없음</div>'; g('odModal').classList.add('op'); }
-function closeOdModal(){ g('odModal').classList.remove('op'); }
-function qStage(id,val){ upStage(id,val); openOdModal(); if(!DB.filter(d=>mailFollowup(d)?.type==='7').length) closeOdModal(); }
-
-// ════════════════════════════════
-// EXPORT
-// ════════════════════════════════
-function exportXlsx(){ if(!DB.length){ toast('⚠️ 내보낼 데이터가 없습니다','wa'); return; } const rows=DB.map(d=>({'회사명':d.company,'공고유형':d.postType,'공고요약':d.summary,'예산연봉':d.budgetText,'업종':d.industry,'담당자':d.contact,'이메일':d.email,'연락처':d.phone,'니즈점수':d.needScore,'니즈등급':d.needLevel,'추천메시지':d.approachMsg,'영업단계':d.stage,'메일발송일':d.mailDate,'다음액션일':d.nextAction,'메모':d.memo,'접촉일':d.date,'링크':d.link})); const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'영업DB'); XLSX.writeFile(wb,`AICUT_영업DB_${todayStr().replace(/[\.\s]/g,'')}.xlsx`); toast('✅ 엑셀 저장 완료','ok'); }
-
-// ════════════════════════════════
-// CRAWLING ENGINE
-// ════════════════════════════════
-const PROXIES=[
-  url=>({endpoint:`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,parse:j=>j.contents||''}),
-  url=>({endpoint:`https://corsproxy.io/?url=${encodeURIComponent(url)}`,parse:t=>t}),
-  url=>({endpoint:`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,parse:t=>t}),
-];
-async function fetchViaProxy(url){
-  for(const makeProxy of PROXIES){
-    const{endpoint,parse}=makeProxy(url);
-    try{
-      const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
-      const r=await fetch(endpoint,{signal:ctrl.signal});
-      clearTimeout(timer);
-      if(!r.ok) throw new Error(`HTTP ${r.status}`);
-      const body=r.headers.get('content-type')?.includes('json')?parse(await r.json()):parse(await r.text());
-      if(body&&body.length>100) return body;
-      throw new Error('빈 응답');
-    }catch(e){ continue; }
-  }
-  throw new Error('모든 프록시 실패');
+  // save bookmark
+  const globalNum = DB.indexOf(d) + 1;
+  saveBookmark(d.company, globalNum);
+  showBookmark(d.company, globalNum);
 }
 
-function detectPostType(url,html){ const u=url.toLowerCase(),t=(html||'').toLowerCase(); if(['saramin','jobkorea','wanted','recruit','jobs','career','채용'].some(x=>u.includes(x))) return '채용'; if(['채용','구인','모집','공채','경력','신입','포지션','직무','연봉'].some(x=>t.includes(x))) return '채용'; if(['kmong','외주나라','freelancer','크몽','outsource','외주'].some(x=>u.includes(x))) return '외주'; if(['외주','프리랜서','의뢰','견적','작업','납품','건당'].some(x=>t.includes(x))) return '외주'; return '일반'; }
+function renderMailPanel(d) {
+  const defaultTmpl = getDefaultTemplate(d.ind);
+  const tmplOptions = TMPL_KEYS.map(k =>
+    `<option value="${k}" ${k === defaultTmpl ? 'selected' : ''}>${TEMPLATES[k].label}</option>`
+  ).join('');
 
-function extractInfo(html,postType){
-  const t=(html||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ');
-  let score=0,reasons=[],budgetText='',summary='';
-  if(postType==='채용'){
-    if(/영상\s*편집|video\s*edit/i.test(t)){score+=40;reasons.push('영상편집 직무');}
-    if(/콘텐츠|미디어|content|media/i.test(t)){score+=30;reasons.push('콘텐츠/미디어');}
-    if(/마케팅|marketing/i.test(t)){score+=20;reasons.push('마케팅');}
-    const salM=t.match(/(?:연봉|급여|salary)[^\d]*(\d[\d,]+)/i);
-    if(salM){ const sal=parseInt(salM[1].replace(/,/g,'')); if(sal>=3000||sal>=30000000){score+=20;reasons.push('연봉 3000만↑');} budgetText=sal<10000?`연봉 ${sal}만`:fBudget(sal*10000); }
-    const titleM=(html||'').match(/<title[^>]*>([^<]+)<\/title>/i);
-    summary=titleM?titleM[1].replace(/[\|\-–]/g,'·').trim().slice(0,45):'영상편집 채용';
-  } else if(postType==='외주'){
-    if(/숏폼|릴스|쇼츠|reels|shorts/i.test(t)){score+=40;reasons.push('숏폼/릴스');}
-    if(/유튜브|youtube/i.test(t)){score+=35;reasons.push('유튜브 편집');}
-    if(/기업\s*영상|홍보\s*영상|corporate|promo/i.test(t)){score+=30;reasons.push('기업/홍보영상');}
-    if(/정기|월정액|monthly|구독/i.test(t)){score+=25;reasons.push('정기/월정액');}
-    const budM=t.match(/(\d[\d,]+)\s*(?:원|만원|천원)/i);
-    if(budM){ const bud=parseInt(budM[1].replace(/,/g,'')); if(bud>=30||bud>=300000){score+=20;reasons.push('예산 30만↑');} budgetText=bud<10000?`${bud}만원`:fBudget(bud); }
-    const titleM=(html||'').match(/<title[^>]*>([^<]+)<\/title>/i);
-    summary=titleM?titleM[1].replace(/[\|\-–]/g,'·').trim().slice(0,45):'영상 외주';
-  } else {
-    if(/영상|video|편집|edit|콘텐츠|content/i.test(t)){score+=20;reasons.push('영상 관련');}
-    summary='일반 기업';
-  }
-  const emailM=t.match(/([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/);
-  const extractedEmail=emailM?emailM[1]:'';
-  const phoneM=t.match(/(?:0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4})/);
-  const extractedPhone=phoneM?phoneM[0]:'';
-  if(extractedEmail){score+=20;reasons.push('이메일 보유');}
-  if(extractedPhone){score+=15;reasons.push('연락처 보유');}
-  const deadM=t.match(/마감[^\d]*(\d{4}[-./]\d{1,2}[-./]\d{1,2})/);
-  if(deadM){ const days=daysDiff(deadM[1]); if(days!==null&&days>=0&&days<=7){score+=10;reasons.push('마감 임박');} }
-  const needLevel=score>=70?'high':score>=40?'mid':'low';
-  return{score,reasons,needLevel,budgetText,summary,extractedEmail,extractedPhone};
-}
+  const subj = TEMPLATES[defaultTmpl].subject(d.company);
+  const body = TEMPLATES[defaultTmpl].body(d.company);
 
-function genMsg(company,postType,summary){
-  if(postType==='채용') return `안녕하세요, ${company||'담당자'} 담당자님.\n\n${summary||'영상편집 담당자'} 채용 중이시죠?\n\n채용 비용 없이 월 49만원으로\n전담 에디터팀 바로 운영 가능합니다.\n\n샘플 영상 1편 무료 제공 중입니다.\naicut.co.kr`;
-  if(postType==='외주') return `안녕하세요, ${company||'담당자'} 담당자님.\n\n${summary||'영상 외주'} 공고 확인했습니다.\n\n건당 의뢰보다 월정액이 훨씬 저렴합니다.\n숏폼 월 4편 49만원 — 정기 계약 시 더 유리해요.\n\naicut.co.kr`;
-  return DEFAULT_MSG(company);
-}
-
-async function startCrawl(){
-  if(crawling) return;
-  const targets=DB.filter(d=>d.link&&d.link.startsWith('http')&&d.crawlStatus!=='done');
-  if(!targets.length){ toast('분석할 링크가 없습니다','wa'); return; }
-  crawling=true;
-  const btn=g('crawlBtn'); btn.disabled=true; btn.textContent='분석 중...';
-  const bar=g('crawlBar'); bar.classList.add('show');
-  g('crawlTitle').textContent=`링크 분석 중... (${targets.length}개)`;
-  const log=g('crawlLog'),pf=g('progressFill'); let done=0;
-  const addLog=(company,status,msg)=>{ const prev=log.querySelector(`[data-c="${CSS.escape(company)}"]`); if(prev)prev.remove(); const el=document.createElement('div'); el.className=`log-item ${status==='ok'?'log-ok':status==='err'?'log-err':'log-ing'}`; el.dataset.c=company; el.textContent=`${status==='ok'?'✓':status==='err'?'✗':'⟳'} ${company}: ${msg}`; log.appendChild(el); log.scrollTop=log.scrollHeight; };
-  for(const d of targets){
-    const idx=DB.findIndex(x=>x.id===d.id); if(idx<0) continue;
-    DB[idx].crawlStatus='crawling'; addLog(d.company,'ing','분석 중...');
-    try{
-      const html=await fetchViaProxy(d.link);
-      const postType=detectPostType(d.link,html);
-      const{score,reasons,needLevel,budgetText,summary,extractedEmail,extractedPhone}=extractInfo(html,postType);
-      const msg=genMsg(d.company,postType,summary);
-      DB[idx]={...DB[idx],crawlStatus:'done',postType,summary,needScore:score,needLevel,budgetText,approachMsg:msg,email:DB[idx].email||extractedEmail,phone:DB[idx].phone||extractedPhone};
-      addLog(d.company,'ok',`${postType} · ${needLevel.toUpperCase()} ${score}점`);
-    }catch(e){
-      const postType=detectPostType(d.link,'');
-      DB[idx]={...DB[idx],crawlStatus:'manual',postType,approachMsg:genMsg(d.company,postType,''),needScore:postType!=='일반'?15:0,needLevel:'low',summary:'⚠️ 수동 확인 필요'};
-      addLog(d.company,'err','프록시 실패 → 수동 확인');
-    }
-    done++;
-    pf.style.width=`${Math.round(done/targets.length*100)}%`;
-    g('crawlStat').textContent=`${done}/${targets.length}`;
-    renderCards(); kpis(); updToday();
-    await new Promise(r=>setTimeout(r,300));
-  }
-  crawling=false; btn.disabled=false; btn.textContent='링크 분석';
-  g('crawlTitle').textContent=`분석 완료 — ${targets.length}개`;
-  save(); updateAll();
-  const manual=DB.filter(d=>d.crawlStatus==='manual').length;
-  toast(`✅ ${targets.length}개 분석 완료${manual>0?` (수동 확인 ${manual}건)`:''}`,'ok');
-}
-
-// ════════════════════════════════
-// COLLECT
-// ════════════════════════════════
-const COLLECT_SOURCES=[
-  {name:'사람인',urls:['https://www.saramin.co.kr/zf_user/search?searchword=영상편집&recruitPage=1','https://www.saramin.co.kr/zf_user/search?searchword=숏폼편집&recruitPage=1'],
-   parse(html){ const items=[]; const re=/class="[^"]*corp_name[^"]*"[^>]*>\s*<a[^>]*>([^<]+)<\/a>/gi,reL=/href="(\/zf_user\/jobs\/relay\/view[^"]+)"/g,reT=/class="[^"]*job_tit[^"]*"[^>]*>\s*<a[^>]*title="([^"]+)"/gi; let m,links=[],titles=[],companies=[]; while((m=re.exec(html))!==null)companies.push(m[1].trim()); while((m=reL.exec(html))!==null)links.push('https://www.saramin.co.kr'+m[1]); while((m=reT.exec(html))!==null)titles.push(m[1].trim()); const len=Math.min(companies.length,links.length,titles.length,15); for(let i=0;i<len;i++)items.push({company:companies[i],link:links[i],summary:titles[i],postType:'채용',source:'사람인'}); return items; }},
-  {name:'잡코리아',urls:['https://www.jobkorea.co.kr/Search/?stext=영상편집&tabType=recruit'],
-   parse(html){ const items=[]; const reC=/class="[^"]*coName[^"]*"[^>]*>\s*<a[^>]*>([^<]+)<\/a>/gi,reL=/href="(\/Recruit\/GI_Read\/\d+[^"]*?)"/g,reT=/class="[^"]*title[^"]*"[^>]*>\s*<a[^>]*>([^<]+)<\/a>/gi; let m,companies=[],links=[],titles=[]; while((m=reC.exec(html))!==null)companies.push(m[1].trim()); while((m=reL.exec(html))!==null)links.push('https://www.jobkorea.co.kr'+m[1]); while((m=reT.exec(html))!==null)titles.push(m[1].trim()); const len=Math.min(companies.length,links.length,titles.length,15); for(let i=0;i<len;i++)items.push({company:companies[i],link:links[i],summary:titles[i],postType:'채용',source:'잡코리아'}); return items; }},
-];
-const VKW=['영상편집','영상제작','영상편집자','숏폼','릴스','쇼츠','콘텐츠제작','유튜브편집','동영상편집','영상','video','edit','shorts','reels','youtube','content'];
-const isVid=t=>VKW.some(k=>t.toLowerCase().includes(k.toLowerCase()));
-
-async function startCollect(){
-  if(collecting) return; collecting=true;
-  const btn=g('collectBtn'); btn.disabled=true; btn.textContent='수집 중...';
-  const bar=g('crawlBar'); bar.classList.add('show');
-  g('crawlTitle').textContent='🆕 신규 기업 수집 중...';
-  g('progressFill').style.width='0%'; g('crawlLog').innerHTML='';
-  const addLog=(msg,s='ing')=>{ const el=document.createElement('div'); el.className=`log-item ${s==='ok'?'log-ok':s==='err'?'log-err':'log-ing'}`; el.textContent=`${s==='ok'?'✓':s==='err'?'✗':'⟳'} ${msg}`; g('crawlLog').appendChild(el); g('crawlLog').scrollTop=g('crawlLog').scrollHeight; };
-  const existNames=new Set(DB.map(d=>d.company.trim().toLowerCase()));
-  const collected=[]; let srcDone=0; const totalSrc=COLLECT_SOURCES.reduce((s,src)=>s+src.urls.length,0);
-  for(const src of COLLECT_SOURCES){
-    if(collected.length>=10) break;
-    for(const url of src.urls){
-      if(collected.length>=10) break;
-      addLog(`${src.name} 검색 중...`);
-      try{
-        const html=await fetchViaProxy(url);
-        const items=src.parse(html);
-        addLog(`${src.name}: ${items.length}개 감지`,'ok');
-        for(const item of items){
-          if(collected.length>=10) break;
-          if(!item.company||item.company.length<2) continue;
-          if(!isVid(item.summary+' '+item.company)) continue;
-          const key=item.company.trim().toLowerCase();
-          if(existNames.has(key)||collected.find(c=>c.company.toLowerCase()===key)) continue;
-          existNames.add(key);
-          collected.push({id:Date.now()+Math.random()*1e9,...item,industry:'미분류',contact:'',email:'',phone:'',stage:'미접촉',memo:`[자동수집] ${todayStr()} ${src.name}`,date:todayStr(),region:'',size:'',budget:0,website:'',nextAction:'',mailDate:'',crawlStatus:'wait',needScore:0,needLevel:'',budgetText:'',approachMsg:'',timeline:[],collectedAt:new Date().toISOString()});
-        }
-      }catch(e){ addLog(`${src.name} 실패: ${e.message.slice(0,25)}`,'err'); }
-      srcDone++; g('progressFill').style.width=`${Math.round(srcDone/totalSrc*100)}%`; g('crawlStat').textContent=`${collected.length}개 수집`;
-      await new Promise(r=>setTimeout(r,500));
-    }
-  }
-  const prevCount=DB.length;
-  if(collected.length>0){
-    DB=[...DB,...collected].map((d,i)=>({...d,id:i}));
-    save(); updateAll();
-    g('crawlBtn').disabled=!DB.some(d=>d.link);
-    const rc=g('collectResult'); rc.style.display='block';
-    g('collectSummary').textContent=`오늘 신규 ${collected.length}개 기업 추가됨 ✅ (기존 ${prevCount}개 + ${collected.length}개 = ${DB.length}개)`;
-    g('collectList').innerHTML=collected.map(c=>`<div style="display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid rgba(168,85,247,.1);font-size:11px"><span style="font-weight:600">${eh(c.company)}</span><span style="color:var(--t3)">${eh(c.source||'')}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--t2)">${eh(c.summary)}</span>${c.link?`<a href="${eh(c.link)}" target="_blank" class="lnk">🔗</a>`:''}</div>`).join('');
-    toast(`✅ 신규 ${collected.length}개 추가! 총 ${DB.length}개`,'ok');
-  } else { addLog('새 기업을 찾지 못했습니다','err'); toast('⚠️ 신규 기업 없음 — 프록시 상태 확인','wa'); }
-  g('crawlTitle').textContent=`수집 완료 — ${collected.length}개 신규`;
-  collecting=false; btn.disabled=false; btn.textContent='신규 수집';
-}
-
-// ════════════════════════════════
-// PLAN
-// ════════════════════════════════
-const VI=['광고','마케팅','미디어','방송','제작','영상','콘텐츠','교육','e커머스','이커머스','쇼핑','패션','뷰티','식음료','F&B','유통'];
-
-function buildPlan(){
-  if(!DB.length) return;
-  const top5=DB.filter(d=>d.stage!=='계약'&&d.stage!=='거절').sort((a,b)=>b.needScore-a.needScore).slice(0,5);
-  const highEmail=DB.filter(d=>d.needLevel==='high'&&d.email);
-  const highNoEmail=DB.filter(d=>d.needLevel==='high'&&!d.email);
-  const monTargets=DB.filter(d=>d.stage==='미접촉'&&d.email).sort((a,b)=>b.needScore-a.needScore).slice(0,10);
-  const wedTargets=DB.filter(d=>{ const fu=mailFollowup(d); return fu?.type==='3'||fu?.type==='7'; }).slice(0,8);
-  const friTargets=DB.filter(d=>d.stage==='응답').slice(0,5);
-  const closeList=DB.filter(d=>isClosable(d));
-  const hireList=DB.filter(d=>d.postType==='채용');
-  const outList=DB.filter(d=>d.postType==='외주');
-  const sent=DB.filter(d=>['메일발송','응답','미팅','계약'].includes(d.stage)).length;
-  const cont=DB.filter(d=>d.stage==='계약').length;
-  const resp=DB.filter(d=>['응답','미팅','계약'].includes(d.stage)).length;
-  const meet=DB.filter(d=>d.stage==='미팅').length;
-  const weekDates=getWeekDates();
-  const todayDow=new Date().getDay();
-  const isMonDay=todayDow===1, isWedDay=todayDow===3, isFriDay=todayDow===5;
-
-  g('planContent').innerHTML=`
-    <!-- 주간 성과 -->
-    <div class="sec">📊 주간 성과 요약</div>
-    <div class="plan-kpi" style="margin-bottom:18px">
-      <div class="kc" style="--ca:linear-gradient(90deg,#1D4ED8,#3B82F6)"><div class="kl">메일 발송</div><div class="kv" style="color:#2563EB">${sent}</div><div class="ks">누적</div></div>
-      <div class="kc" style="--ca:linear-gradient(90deg,#5B21B6,#7C3AED)"><div class="kl">응답 수신</div><div class="kv" style="color:#7C3AED">${resp}</div><div class="ks">회신</div></div>
-      <div class="kc" style="--ca:linear-gradient(90deg,#B45309,#F59E0B)"><div class="kl">미팅 진행</div><div class="kv" style="color:#D97706">${meet}</div><div class="ks">건</div></div>
-      <div class="kc" style="--ca:linear-gradient(90deg,#065F46,#10B981)"><div class="kl">계약 성사</div><div class="kv" style="color:#059669">${cont}</div><div class="ks">전환율 ${sent>0?Math.round(cont/sent*100):0}%</div></div>
-    </div>
-
-    <!-- TOP5 -->
-    <div class="sec">🤖 AI 오늘의 TOP 5</div>
-    <div class="pc" style="margin-bottom:16px">
-      ${top5.length?`<div class="t5-list">${top5.map((d,i)=>{
-        const rk=i===0?'rk1':i===1?'rk2':i===2?'rk3':'rkn';
-        const act=d.stage==='미접촉'?'📧 콜드메일':d.stage==='메일발송'?'🔁 팔로업':d.stage==='응답'?'📅 미팅 제안':'🎯 액션';
-        return `<div class="t5-item">
-          <span class="t5-rank ${rk}">${i+1}</span>
-          <div class="t5-info">
-            <div class="t5-nm">${eh(d.company)} ${d.postType==='채용'?'<span class="type-hire">채용</span>':d.postType==='외주'?'<span class="type-out">외주</span>':''}${isClosable(d)&&d.stage==='미팅'?'<span class="close-tag">🔥 계약 임박</span>':''}</div>
-            <div class="t5-meta">${[d.industry,d.size,d.region].filter(Boolean).join(' · ')} · ${d.needLevel==='high'?'🔥 HIGH':d.needLevel==='mid'?'⭐ MID':'LOW'} ${d.needScore}pt</div>
-            ${d.summary?`<div class="t5-reason">${eh(d.summary)}</div>`:''}
-          </div>
-          <button class="send-btn" onclick="sendAction(${d.id},'${act.replace(/'/g,'')}')">${act}</button>
-          <span class="t5-sc">${d.needScore}pt</span>
-        </div>`;
-      }).join('')}</div>`:'<div class="ndm">데이터 없음</div>'}
-    </div>
-
-    <!-- HIGH 니즈 분리 -->
-    <div class="pg" style="margin-bottom:16px">
-      <div class="pc">
-        <div class="pt">📧 즉시 연락 가능 <span class="pbadge">이메일 있음 ${highEmail.length}개</span></div>
-        ${highEmail.length?`<div class="t5-list">${highEmail.slice(0,6).map(d=>`<div class="t5-item"><div class="t5-info"><div class="t5-nm">${eh(d.company)}</div><div class="t5-meta">${eh(d.email)}</div></div><button class="send-btn" onclick="quickCopy(${d.id})">📋 복사</button></div>`).join('')}</div>`:'<div class="ndm">없음</div>'}
+  g('rightPanel').innerHTML = `
+    <div class="mail-panel">
+      <div class="mail-company">
+        ${esc(d.company)}
+        <small>${esc(d.ind)}</small>
       </div>
-      <div class="pc">
-        <div class="pt">🔍 연락처 확보 필요 <span class="pbadge">이메일 없음 ${highNoEmail.length}개</span></div>
-        ${highNoEmail.length?`<div class="t5-list">${highNoEmail.slice(0,6).map(d=>`<div class="t5-item"><div class="t5-info"><div class="t5-nm">${eh(d.company)}</div><div class="t5-meta">${eh(d.summary)||d.industry}</div></div>${d.link?`<a class="lnk" href="${eh(d.link)}" target="_blank">🔗</a>`:''}</div>`).join('')}</div>`:'<div class="ndm">없음</div>'}
+
+      <label class="panel-label">템플릿 선택</label>
+      <select class="tmpl-select" id="tmplSelect" onchange="onTmplChange('${esc(d.company)}')">
+        ${tmplOptions}
+      </select>
+
+      <label class="panel-label">제목</label>
+      <div class="subject-row">
+        <input class="subject-input" id="subjInput" type="text" value="${esc(subj)}">
+        <button class="copy-btn" onclick="copySubject()" id="copySubjBtn">
+          📋 제목 복사
+        </button>
       </div>
-    </div>
 
-    <!-- 계약 임박 -->
-    ${closeList.length?`
-    <div class="close-section" style="margin-bottom:16px">
-      <div class="sec" style="margin-bottom:7px">🔥 계약 전환 가능성 높은 기업</div>
-      <div class="close-list">${closeList.map(d=>`<div class="close-item"><div style="flex:1"><div style="font-size:12px;font-weight:600">${eh(d.company)} <span class="close-tag">계약 임박</span></div><div style="font-size:10px;color:var(--t3);margin-top:1px">${[d.industry,d.stage,d.email].filter(Boolean).join(' · ')}</div></div><button class="mab" onclick="upStage(${d.id},'계약');buildPlan()">계약 완료</button></div>`).join('')}</div>
-    </div>`:''}
-
-    <!-- 이번주 액션 + 전략 -->
-    <div class="pg">
-      <div class="pc">
-        <div class="pt">📅 이번 주 액션 플랜</div>
-        <ul class="wl">
-          <li class="wi">
-            <span class="dl ${isMonDay?'today-day':''}">${weekDates[0].label}</span>
-            <div class="dt2"><h4>📧 미접촉 TOP ${monTargets.length} 메일 발송</h4>
-            <ul class="tk">${monTargets.length?monTargets.map(d=>`<li>${eh(d.company)} — ${eh(d.email)}</li>`).join(''):'<li style="color:var(--t3)">대상 없음</li>'}</ul></div>
-          </li>
-          <li class="wi">
-            <span class="dl ${isWedDay?'today-day':''}">${weekDates[1].label}</span>
-            <div class="dt2"><h4>🔁 3일↑ 팔로업</h4>
-            <ul class="tk">${wedTargets.length?wedTargets.map(d=>{const fu=mailFollowup(d);return `<li>${eh(d.company)} — ${fu?fu.label:'경과'}</li>`;}).join(''):'<li style="color:var(--t3)">대상 없음</li>'}</ul></div>
-          </li>
-          <li class="wi">
-            <span class="dl ${isFriDay?'today-day':''}">${weekDates[2].label}</span>
-            <div class="dt2"><h4>🤝 응답 기업 미팅 준비</h4>
-            <ul class="tk">${friTargets.length?friTargets.map(d=>`<li>${eh(d.company)} — 제안서 준비</li>`).join(''):'<li style="color:var(--t3)">대상 없음</li>'}<li>주간 DB 단계 업데이트</li></ul></div>
-          </li>
-        </ul>
+      <label class="panel-label">본문</label>
+      <div class="body-wrap">
+        <textarea class="body-textarea" id="bodyInput">${esc(body)}</textarea>
       </div>
-      <div class="pc">
-        <div class="pt">📋 공고 유형별 전략</div>
-        <div class="strat-card" style="margin-bottom:11px">
-          <div class="strat-type"><span class="type-hire">채용공고</span> → "채용 대신 에이컷" <span style="font-size:10px;color:var(--t3)">${hireList.length}개</span></div>
-          <div class="strat-body">채용 비용 없이 월 49만원으로 전담 에디터팀을 즉시 운영. 면접·수습 없이 바로 납품.</div>
-          <div class="strat-msg">안녕하세요, [회사명] 담당자님.
-영상편집 담당자 채용 중이시죠?
-채용 비용 없이 월 49만원으로
-전담 에디터팀 바로 운영 가능합니다.
-샘플 1편 무료 — aicut.co.kr</div>
-          <div class="strat-copy" onclick="navigator.clipboard.writeText('안녕하세요, [회사명] 담당자님.\\n영상편집 담당자 채용 중이시죠?\\n채용 비용 없이 월 49만원으로\\n전담 에디터팀 바로 운영 가능합니다.\\n샘플 1편 무료 — aicut.co.kr').then(()=>toast('📋 복사 완료','ok'))">📋 메시지 복사</div>
-        </div>
-        <div class="strat-card">
-          <div class="strat-type"><span class="type-out">외주공고</span> → "건당보다 월정액" <span style="font-size:10px;color:var(--t3)">${outList.length}개</span></div>
-          <div class="strat-body">매달 반복 의뢰 대신 구독형 서비스가 훨씬 저렴. 숫자로 비교해서 보여주기.</div>
-          <div class="strat-msg">안녕하세요, [회사명] 담당자님.
-영상 외주 찾고 계시죠?
-건당 의뢰보다 월정액이 훨씬 저렴합니다.
-숏폼 월 4편 49만원 — aicut.co.kr</div>
-          <div class="strat-copy" onclick="navigator.clipboard.writeText('안녕하세요, [회사명] 담당자님.\\n영상 외주 찾고 계시죠?\\n건당 의뢰보다 월정액이 훨씬 저렴합니다.\\n숏폼 월 4편 49만원 — aicut.co.kr').then(()=>toast('📋 복사 완료','ok'))">📋 메시지 복사</div>
-        </div>
-      </div>
-    </div>
-
-    ${renderIndTargetSection()}
-  `;
-}
-
-// 플랜 탭에서 콜드메일 발송 버튼
-async function sendAction(id, actionLabel){
-  const d=DB.find(x=>x.id===id); if(!d) return;
-  if(actionLabel.includes('메일')||actionLabel.includes('팔로업')){
-    await quickCopy(id);
-  } else {
-    openPanel(id);
-  }
-}
-
-// ════════════════════════════════
-// 업종별 타겟 전략 DB
-// ════════════════════════════════
-const IND_STRATEGY = [
-  {
-    key:'교육', icon:'📚', need:'high',
-    keywords:['학원','교육','과외','어학','학습','유아','아동','보습','입시','교습'],
-    point:'온라인 강의 영상, 원장 소개, 커리큘럼 안내 영상 니즈 높음.\n학생·학부모 모집 광고 숏폼 수요 지속 증가 중.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 학원·교육기관에서\n온라인 강의 영상이나 원장 소개 영상 제작\n문의가 많이 들어오고 있어요.\n\n에이컷은 소스 파일만 주시면\n전담 에디터가 바로 편집해드리는 서비스입니다.\n\n샘플 1편 무료로 먼저 확인해보세요.\n→ aicut.co.kr`,
-    searchTip:'네이버 지도 "학원" 검색 → 홈페이지 URL 수집 → 이메일 추출',
-  },
-  {
-    key:'부동산', icon:'🏢', need:'high',
-    keywords:['부동산','공인중개','중개','매물','분양','임대','공인'],
-    point:'매물 소개 영상, 지역 시장 분석 영상 수요 급증.\n월정액 계약 시 매달 신규 매물 영상 자동화 가능.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 매물 소개 영상이 있는 중개사가\n그렇지 않은 곳보다 문의가 2~3배 많습니다.\n\n에이컷은 사진·소스 파일만 주시면\n매물 소개 영상을 월정액으로 제작해드려요.\n\n샘플 1편 무료 제공 중입니다.\n→ aicut.co.kr`,
-    searchTip:'부동산 플랫폼 공인중개사 목록에서 사무소 웹사이트 수집',
-  },
-  {
-    key:'병원/의원', icon:'🏥', need:'high',
-    keywords:['병원','의원','클리닉','치과','한의원','성형','피부과','내과','정형외과','산부인과'],
-    point:'시술 소개, 원장 인터뷰, 환자 후기 영상 니즈 높음.\n광고 규제 있어 정보성 영상 수요 증가 추세.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 병원·의원에서\n시술 소개나 원장님 인터뷰 영상을 통해\n신환을 모집하는 경우가 많아졌어요.\n\n에이컷은 촬영본만 주시면\n전담 에디터가 바로 편집해드립니다.\n\n샘플 1편 무료 확인 → aicut.co.kr`,
-    searchTip:'건강보험심사평가원 병원 목록 + 네이버 지도 홈페이지 URL 수집',
-  },
-  {
-    key:'뷰티/미용', icon:'💄', need:'high',
-    keywords:['뷰티','미용','헤어','네일','피부','스킨케어','화장품','코스메틱','살롱'],
-    point:'시술 전후 비포애프터, SNS 숏폼 수요 매우 높음.\n인스타·유튜브 채널 운영하는 샵 타겟팅 효과적.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n인스타그램·유튜브에 올릴\n숏폼 영상 제작 고민되시지 않으세요?\n\n에이컷은 촬영본만 주시면\n시술 전후 영상, 리뷰 영상을\n월정액으로 정기 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
-    searchTip:'네이버 지도 "헤어샵/뷰티샵" 검색 → 인스타 채널 있는 곳 우선',
-  },
-  {
-    key:'식음료/F&B', icon:'🍽️', need:'mid',
-    keywords:['카페','레스토랑','식당','베이커리','디저트','주점','바','푸드','치킨','피자','분식'],
-    point:'메뉴 소개 숏폼, 매장 분위기 영상 SNS 바이럴 효과 높음.\n시즌별·이벤트별 콘텐츠 정기 제작 수요 있음.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 인스타·유튜브에\n메뉴 영상 올리면 방문객이 눈에 띄게 늘어요.\n\n에이컷은 촬영본만 주시면\n숏폼 영상을 월정액으로 제작해드립니다.\n\n샘플 1편 무료 확인 → aicut.co.kr`,
-    searchTip:'배달의민족·카카오맵 인기 매장 목록에서 SNS 있는 곳 우선 수집',
-  },
-  {
-    key:'헬스/피트니스', icon:'💪', need:'high',
-    keywords:['헬스','피트니스','PT','필라테스','요가','크로스핏','스포츠','수영','골프','테니스'],
-    point:'운동 가이드 영상, 회원 모집 광고 숏폼 수요 높음.\n PT샵·필라테스 원장 개인 브랜딩 영상 증가 추세.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 피트니스·필라테스 센터에서\n회원 모집용 숏폼 영상 효과가 굉장히 좋더라고요.\n\n에이컷은 촬영본만 주시면\n운동 가이드·회원모집 영상을\n월정액으로 정기 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
-    searchTip:'네이버 지도 "피트니스/필라테스" 검색 → 웹사이트 있는 곳 타겟',
-  },
-  {
-    key:'법무/세무/회계', icon:'⚖️', need:'mid',
-    keywords:['법무사','변호사','법률','세무사','세무','회계','공인회계사','노무','변리사'],
-    point:'전문가 신뢰도 강화용 영상, 법률 정보 콘텐츠 수요 증가.\n유튜브 채널 운영하는 전문직 사무소 타겟 효과적.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 법률·세무 분야에서\n전문성을 보여주는 영상 콘텐츠가\n신규 고객 유치에 큰 효과를 내고 있어요.\n\n에이컷은 정기 콘텐츠를\n월정액으로 편하게 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
-    searchTip:'대한변호사협회 회원 검색 + 개인 법무사 홈페이지 보유 여부 확인',
-  },
-  {
-    key:'건설/인테리어', icon:'🏗️', need:'mid',
-    keywords:['건설','인테리어','시공','리모델링','건축','설계','인테리어디자인','공사'],
-    point:'시공 전후 비포애프터 영상, 포트폴리오 영상 수요 높음.\n유튜브·인스타 운영하는 인테리어 업체 타겟 적합.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n시공 전후 영상 하나가\n수백 장의 사진보다 더 강력한 포트폴리오가 돼요.\n\n에이컷은 현장 영상만 주시면\n전문 편집으로 바로 납품해드립니다.\n\n샘플 1편 무료 확인 → aicut.co.kr`,
-    searchTip:'인테리어 플랫폼(오늘의집, 집닥 등) 업체 목록 + 웹사이트 수집',
-  },
-  {
-    key:'여행/숙박', icon:'✈️', need:'mid',
-    keywords:['여행사','호텔','펜션','게스트하우스','숙박','리조트','여행','투어'],
-    point:'숙소·여행지 소개 영상, 체험 후기 숏폼 바이럴 효과 높음.\n네이버·에어비앤비 등록 펜션·숙박업체 타겟 효과적.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 숙소·여행지 영상 하나가\n예약률을 크게 올려준다는 거 아시죠?\n\n에이컷은 현장 촬영본만 주시면\n숙소 소개 영상을 월정액으로 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
-    searchTip:'에어비앤비·야놀자 숙박업체 목록에서 개인 웹사이트 보유 업체 수집',
-  },
-  {
-    key:'쇼핑몰/이커머스', icon:'🛍️', need:'high',
-    keywords:['쇼핑몰','이커머스','온라인쇼핑','판매','스토어','쿠팡','네이버스토어','셀러'],
-    point:'상품 소개 영상, 개봉기 숏폼 전환율 향상 직결.\n정기적으로 신상품이 나오는 셀러 월정액 계약 유효.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n상품 페이지에 영상 하나만 추가해도\n구매 전환율이 올라가는 거 경험해보셨나요?\n\n에이컷은 제품 촬영본·이미지만 주시면\n상품 소개 영상을 월정액으로 제작해드립니다.\n\n샘플 1편 무료 확인 → aicut.co.kr`,
-    searchTip:'스마트스토어 인기 셀러 목록 + 자사몰 운영 여부 확인 후 수집',
-  },
-  {
-    key:'스타트업/IT', icon:'🚀', need:'mid',
-    keywords:['스타트업','테크','IT','앱','SaaS','플랫폼','소프트웨어','개발사','AI'],
-    point:'서비스 소개 영상, 투자 IR 덱 영상, 팀 소개 영상 수요.\n초기 스타트업일수록 영상 제작 인력 없어 외주 의존.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n서비스 소개 영상이나 팀 소개 영상\n직접 제작하기엔 시간이 너무 부족하시죠?\n\n에이컷은 서비스 설명 자료만 주시면\n소개 영상을 빠르게 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
-    searchTip:'스타트업 DB(THE VC, 크런치베이스) 초기 스타트업 목록 수집',
-  },
-  {
-    key:'자동차/모빌리티', icon:'🚗', need:'mid',
-    keywords:['자동차','중고차','모빌리티','카센터','튜닝','렌터카','딜러','카드'],
-    point:'차량 소개 영상, 시승 후기, 정비 가이드 유튜브 콘텐츠 수요.\n중고차 딜러·수입차 전시장 타겟 효과적.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n차량 소개·시승 영상 있는 딜러가\n없는 곳보다 문의가 훨씬 많이 옵니다.\n\n에이컷은 촬영본만 주시면\n차량 소개 영상을 월정액으로 제작해드려요.\n\n샘플 1편 무료 → aicut.co.kr`,
-    searchTip:'엔카·KB차차차 딜러 목록에서 독립 웹사이트 보유 딜러 수집',
-  },
-  {
-    key:'패션/의류', icon:'👗', need:'high',
-    keywords:['패션','의류','쇼핑','브랜드','아울렛','편집샵','스트릿','디자이너'],
-    point:'신상품 룩북 영상, SNS 숏폼 대량 제작 수요 매우 높음.\n인스타·틱톡 운영하는 패션 브랜드 타겟 적합.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n신상품 나올 때마다 룩북 영상 만들기\n너무 번거롭고 비용도 크시죠?\n\n에이컷은 샘플·촬영본만 주시면\n월정액으로 꾸준히 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
-    searchTip:'무신사·지그재그 입점 브랜드 중 독립 쇼핑몰 운영 업체 수집',
-  },
-  {
-    key:'금융/보험', icon:'💰', need:'mid',
-    keywords:['금융','보험','투자','증권','대출','캐피탈','저축','신협','새마을금고'],
-    point:'금융 상품 설명 영상, FA 개인 브랜딩 영상 수요 증가.\n컴플라이언스 준수하는 정보성 영상 제작 역량 필요.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n금융·보험 상품 설명 영상이\n고객 이해도와 신뢰도를 크게 높여준다는 거\n알고 계시죠?\n\n에이컷은 전문 금융 콘텐츠 영상을\n월정액으로 정기 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
-    searchTip:'금융감독원 금융회사 검색 + FA·설계사 개인 블로그/SNS 보유자 수집',
-  },
-  {
-    key:'종교/비영리', icon:'🙏', need:'low',
-    keywords:['교회','절','사찰','성당','NGO','비영리','재단','협회','단체','봉사'],
-    point:'예배·행사 영상 정기 편집, 캠페인 홍보 영상 수요 있음.\n예산 제약 있어 월정액 가성비 어필이 핵심.',
-    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n예배·행사 영상 편집에\n많은 시간이 소요되시지 않나요?\n\n에이컷은 촬영본만 주시면\n합리적인 월정액으로 정기 편집해드립니다.\n\n샘플 1편 무료 확인 → aicut.co.kr`,
-    searchTip:'각 종교 단체 공식 웹사이트 담당자 이메일 수집',
-  },
-];
-
-// 내 DB에서 업종별 기업 매칭
-function matchIndTargets(){
-  const result={};
-  for(const ind of IND_STRATEGY){
-    const matched=DB.filter(d=>{
-      const t=(d.industry+' '+d.company).toLowerCase();
-      return ind.keywords.some(k=>t.includes(k.toLowerCase()));
-    });
-    result[ind.key]=matched;
-  }
-  return result;
-}
-
-// ════════════════════════════════
-// 홈페이지 → 이메일 추출
-// ════════════════════════════════
-async function extractEmailFromSite(url){
-  try{
-    const html=await fetchViaProxy(url);
-    // 이메일 패턴 추출
-    const emailRe=/([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,6})/g;
-    const found=new Set();
-    let m;
-    while((m=emailRe.exec(html))!==null){
-      const email=m[1].toLowerCase();
-      // 필터: 이미지/스타일/스크립트 내 노이즈 제거
-      if(email.includes('.png')||email.includes('.jpg')||email.includes('.css')||email.includes('.js')) continue;
-      if(email.endsWith('.co')||email.endsWith('.kr')||email.includes('@')){
-        found.add(email);
-      }
-    }
-    // contact/about 페이지도 시도
-    if(found.size===0){
-      const contactUrls=[
-        url.replace(/\/$/, '')+'/contact',
-        url.replace(/\/$/, '')+'/about',
-        url.replace(/\/$/, '')+'/연락처',
-      ];
-      for(const cu of contactUrls){
-        try{
-          const ch=await fetchViaProxy(cu);
-          while((m=emailRe.exec(ch))!==null){
-            const email=m[1].toLowerCase();
-            if(!email.includes('.png')&&!email.includes('.jpg')) found.add(email);
-          }
-          if(found.size>0) break;
-        }catch(e){}
-      }
-    }
-    return [...found].filter(e=>e.includes('.')&&e.includes('@')).slice(0,3);
-  }catch(e){ return []; }
-}
-
-// 특정 기업 이메일 추출 (단건)
-async function extractOneEmail(id){
-  const i=DB.findIndex(d=>d.id===id); if(i<0) return;
-  const d=DB[i];
-  const url=d.website||d.link;
-  if(!url){ toast('⚠️ 웹사이트 URL이 없습니다','wa'); return; }
-  toast(`🔍 ${d.company} 이메일 추출 중...`,'');
-  const emails=await extractEmailFromSite(url);
-  if(emails.length){
-    DB[i].email=emails[0];
-    if(emails.length>1) DB[i].memo=(DB[i].memo?DB[i].memo+'\n':'')+`추가 이메일: ${emails.slice(1).join(', ')}`;
-    save(); updateAll();
-    toast(`✅ ${d.company} 이메일 추출: ${emails[0]}`,'ok');
-  } else {
-    toast(`⚠️ ${d.company} 이메일을 찾지 못했습니다`,'wa');
-  }
-}
-
-// 업종 내 이메일 없는 기업 일괄 추출
-async function extractEmailsBulk(indKey){
-  const targets=DB.filter(d=>{
-    const t=(d.industry+' '+d.company).toLowerCase();
-    const ind=IND_STRATEGY.find(x=>x.key===indKey);
-    if(!ind) return false;
-    return ind.keywords.some(k=>t.includes(k.toLowerCase()))&&!d.email&&(d.website||d.link);
-  });
-  if(!targets.length){ toast('이메일 추출할 기업이 없습니다 (웹사이트 URL 필요)','wa'); return; }
-
-  const bar=g('emailExtractBar'); bar.classList.add('show');
-  const fill=g('eeFill'), prog=g('eeProgress'), log=g('eeLog');
-  const addLog=(msg,ok)=>{ const el=document.createElement('div'); el.style.color=ok?'var(--ok)':'var(--err)'; el.textContent=(ok?'✓ ':'✗ ')+msg; log.appendChild(el); log.scrollTop=log.scrollHeight; };
-
-  let done=0, found=0;
-  for(const d of targets){
-    prog.textContent=`${done+1}/${targets.length}`;
-    const idx=DB.findIndex(x=>x.id===d.id);
-    const url=d.website||d.link;
-    try{
-      const emails=await extractEmailFromSite(url);
-      if(emails.length&&idx>=0){
-        DB[idx].email=emails[0];
-        found++;
-        addLog(`${d.company}: ${emails[0]}`,true);
-      } else {
-        addLog(`${d.company}: 이메일 없음`,false);
-      }
-    }catch(e){ addLog(`${d.company}: 실패`,false); }
-    done++;
-    fill.style.width=Math.round(done/targets.length*100)+'%';
-    await new Promise(r=>setTimeout(r,500));
-  }
-  save(); updateAll();
-  toast(`✅ ${indKey} 업종 이메일 추출 완료 — ${found}개 수집 / ${targets.length}개 시도`,'ok');
-  setTimeout(()=>bar.classList.remove('show'),5000);
-}
-
-// buildPlan에 업종별 타겟 섹션 추가 렌더
-function renderIndTargetSection(){
-  const matched=matchIndTargets();
-  const noEmail=DB.filter(d=>!d.email&&(d.website||d.link)).length;
-
-  return `
-    <div class="sec" style="margin-top:4px">🏢 업종별 마케팅 제안 타겟</div>
-    <div style="background:rgba(92,61,232,.04);border:1px solid var(--bd);border-radius:var(--r);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <div style="font-size:12px;color:var(--t2)">
-        💡 <strong>공고 없어도 업종만 있으면 제안 가능</strong> — 15개 업종 맞춤 메시지 자동 생성
-        ${noEmail>0?`<span style="margin-left:10px;font-size:11px;color:var(--warn)">📬 웹사이트 URL 보유 ${noEmail}개 기업 이메일 미수집</span>`:''}
-      </div>
-      <button onclick="extractEmailsBulk('전체')" style="font-size:11px;padding:5px 12px;background:linear-gradient(135deg,var(--ac2),var(--ac));color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:'Pretendard',sans-serif;font-weight:600">
-        📬 전체 이메일 일괄 추출
+      <button class="copy-btn copy-btn-full" onclick="copyBody()" id="copyBodyBtn">
+        📋 본문 복사
       </button>
-    </div>
-    <div class="ind-target-grid">
-      ${IND_STRATEGY.map(ind=>{
-        const companies=matched[ind.key]||[];
-        const withEmail=companies.filter(d=>d.email);
-        const noEmailCo=companies.filter(d=>!d.email&&(d.website||d.link));
-        const needBadge=ind.need==='high'?'<span class="ind-tc-need ind-need-high">🔥 HIGH</span>':ind.need==='mid'?'<span class="ind-tc-need ind-need-mid">⭐ MID</span>':'<span class="ind-tc-need" style="background:#F0F1F7;color:#9592B0">LOW</span>';
-        return `<div class="ind-target-card">
-          <div class="ind-tc-header">
-            <div class="ind-tc-name">${ind.icon} ${ind.key}</div>
-            <div style="display:flex;align-items:center;gap:5px">
-              ${needBadge}
-              ${companies.length?`<span class="ind-tc-cnt">DB ${companies.length}개</span>`:''}
-            </div>
-          </div>
-          <div class="ind-tc-point">${ind.point}</div>
-          <div class="ind-tc-msg">${eh(ind.msg('[회사명]'))}</div>
-          <div class="ind-tc-actions">
-            <button class="ind-tc-btn primary" onclick="copyIndMsg('${ind.key}')">📋 메시지 복사</button>
-            ${noEmailCo.length?`<button class="ind-tc-btn" onclick="extractEmailsBulk('${ind.key}')">📬 이메일 추출 (${noEmailCo.length})</button>`:''}
-            ${companies.length?`<button class="ind-tc-btn" onclick="filterToIndCompanies('${ind.key}')">목록 보기 (${companies.length})</button>`:''}
-          </div>
-          ${companies.length?`
-          <div class="ind-co-list">
-            ${companies.slice(0,4).map(d=>`
-              <div class="ind-co-row">
-                <span class="ind-co-name" title="${eh(d.company)}">${eh(d.company)}</span>
-                ${d.email
-                  ?`<span class="ind-co-email">✅ <a class="lnk" href="mailto:${eh(d.email)}">${eh(d.email)}</a></span>`
-                  :(d.website||d.link)
-                    ?`<span class="ind-co-extract" onclick="extractOneEmail(${d.id})">📬 이메일 추출</span>`
-                    :`<span class="ind-co-no-email">❌ URL없음</span>`
-                }
-              </div>`).join('')}
-            ${companies.length>4?`<div style="font-size:10px;color:var(--t3);padding-top:3px">+${companies.length-4}개 더 있음 · <span style="color:var(--ac);cursor:pointer" onclick="filterToIndCompanies('${ind.key}')">전체보기</span></div>`:''}
-          </div>`:'<div style="font-size:10px;color:var(--t3);padding-top:6px">💡 ${ind.searchTip}</div>'}
-        </div>`;
-      }).join('')}
+
+      <div style="margin-top:16px">
+        <label class="panel-label">이메일 수신자</label>
+        <div style="font-size:13px;color:var(--purple);font-weight:600;padding:8px 12px;background:var(--purple-light);border-radius:8px">
+          📧 ${esc(d.email)}
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <label class="panel-label">발송 후 푸터 미리보기</label>
+        <div class="footer-preview">
+          <strong>AICUT</strong> | AI 영상 편집 서비스<br>
+          master@aicut.co.kr &nbsp;|&nbsp; aicut.co.kr<br>
+          <span style="font-size:10px">수신거부: master@aicut.co.kr로 '수신거부' 제목으로 회신해 주세요.</span>
+        </div>
+      </div>
     </div>
   `;
 }
 
-// 업종별 메시지 복사
-function copyIndMsg(indKey){
-  const ind=IND_STRATEGY.find(x=>x.key===indKey); if(!ind) return;
-  navigator.clipboard.writeText(ind.msg('[회사명]'))
-    .then(()=>toast(`📋 ${indKey} 제안 메시지 복사 완료`,'ok'))
-    .catch(()=>toast('복사 실패','wa'));
+function onTmplChange(company) {
+  const key = g('tmplSelect').value;
+  const t = TEMPLATES[key];
+  if (!t) return;
+  g('subjInput').value = t.subject(company);
+  g('bodyInput').value = t.body(company);
 }
 
-// 해당 업종 기업 목록으로 이동
-function filterToIndCompanies(indKey){
-  swTab('companies',document.querySelectorAll('.tb')[1]);
-  const ind=IND_STRATEGY.find(x=>x.key===indKey); if(!ind) return;
-  const srch=g('cardSrch'); if(srch){ srch.value=indKey; }
-  setCardFilter('all',g('cf-all'));
+// ══════════════════════════════════
+// COPY
+// ══════════════════════════════════
+function copySubject() {
+  const val = g('subjInput').value;
+  copyText(val, 'copySubjBtn', '📋 제목 복사');
 }
 
-// extractEmailsBulk 전체 버전
-const _origExtract=extractEmailsBulk;
-extractEmailsBulk=async function(indKey){
-  if(indKey==='전체'){
-    // 모든 업종 이메일 없고 URL 있는 기업
-    const targets=DB.filter(d=>!d.email&&(d.website||d.link));
-    if(!targets.length){ toast('웹사이트 URL 보유 기업 중 이메일 없는 곳이 없습니다','wa'); return; }
-    const bar=g('emailExtractBar'); bar.classList.add('show');
-    const fill=g('eeFill'),prog=g('eeProgress'),log=g('eeLog');
-    const addLog=(msg,ok)=>{ const el=document.createElement('div'); el.style.color=ok?'var(--ok)':'var(--err)'; el.textContent=(ok?'✓ ':'✗ ')+msg; log.appendChild(el); log.scrollTop=log.scrollHeight; };
-    let done=0,found=0;
-    for(const d of targets){
-      prog.textContent=`${done+1}/${targets.length}`;
-      const idx=DB.findIndex(x=>x.id===d.id);
-      try{
-        const emails=await extractEmailFromSite(d.website||d.link);
-        if(emails.length&&idx>=0){ DB[idx].email=emails[0]; found++; addLog(`${d.company}: ${emails[0]}`,true); }
-        else addLog(`${d.company}: 없음`,false);
-      }catch(e){ addLog(`${d.company}: 실패`,false); }
-      done++; fill.style.width=Math.round(done/targets.length*100)+'%';
-      await new Promise(r=>setTimeout(r,400));
+function copyBody() {
+  const val = g('bodyInput').value;
+  copyText(val, 'copyBodyBtn', '📋 본문 복사');
+}
+
+function copyText(text, btnId, originalLabel) {
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      showToast('📋 복사됐습니다!');
+      const btn = g(btnId);
+      if (btn) {
+        btn.textContent = '✅ 복사됨!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = originalLabel;
+          btn.classList.remove('copied');
+        }, 1800);
+      }
+    })
+    .catch(() => showToast('복사 실패 — 직접 선택해주세요'));
+}
+
+// ══════════════════════════════════
+// DONE TOGGLE
+// ══════════════════════════════════
+function toggleDone(event, id) {
+  event.stopPropagation();
+  const idx = DB.findIndex(d => d.id === id);
+  if (idx < 0) return;
+
+  DB[idx].done = !DB[idx].done;
+  // re-sort
+  DB = sortDB(DB);
+
+  saveDone();
+  saveData();
+  renderAll();
+
+  if (DB[idx].done) {
+    showToast(`✅ ${DB[idx].company} 발송완료 처리`);
+    // if selected card was just done, clear panel
+    if (selectedId === id) {
+      selectedId = null;
+      g('rightPanel').innerHTML = `<div class="panel-empty">
+        <div class="ic">✅</div>
+        <p>발송완료 처리됐습니다.<br>다음 기업을 선택해주세요</p>
+      </div>`;
     }
-    save(); updateAll();
-    toast(`✅ 전체 이메일 추출 완료 — ${found}개 수집`,'ok');
-    setTimeout(()=>bar.classList.remove('show'),5000);
-  } else {
-    await _origExtract(indKey);
   }
-};
-
-// ════════════════════════════════
-// TAB / TOAST / INIT
-// ════════════════════════════════
-function swTab(tab, btn){
-  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
-  g('pane-'+tab).classList.add('on');
-  if(btn) btn.classList.add('on');
 }
-function toast(msg,type=''){ const t=g('toast'); t.textContent=msg; t.className=`toast ${type} show`; setTimeout(()=>t.classList.remove('show'),3200); }
 
-Chart.defaults.color='#4B4873';
-Chart.defaults.font.family='Pretendard';
-loadGoals();
-load();
+// ══════════════════════════════════
+// TABS
+// ══════════════════════════════════
+function setTab(btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  currentTab = btn.dataset.ind;
+  renderCards();
+}
+
+// ══════════════════════════════════
+// BOOKMARK
+// ══════════════════════════════════
+function saveBookmark(company, num) {
+  localStorage.setItem(STORAGE_KEY_MARK, JSON.stringify({ company, num }));
+}
+function loadBookmark() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY_MARK);
+    if (!s) return;
+    const { company, num } = JSON.parse(s);
+    showBookmark(company, num);
+  } catch(e) {}
+}
+function showBookmark(company, num) {
+  const bar = g('bookmarkBar');
+  bar.classList.remove('hidden');
+  g('bookmarkName').textContent = company;
+  g('bookmarkNum').textContent = `(${num}번)`;
+}
+function clearBookmark() {
+  localStorage.removeItem(STORAGE_KEY_MARK);
+  g('bookmarkBar').classList.add('hidden');
+  showToast('🔖 북마크 초기화');
+}
+
+// ══════════════════════════════════
+// STORAGE
+// ══════════════════════════════════
+function saveDone() {
+  const doneSet = new Set(DB.filter(d => d.done).map(d => d.company));
+  localStorage.setItem(STORAGE_KEY_DONE, JSON.stringify([...doneSet]));
+}
+function loadDone() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY_DONE);
+    return s ? new Set(JSON.parse(s)) : new Set();
+  } catch(e) { return new Set(); }
+}
+function saveData() {
+  try { localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(DB)); } catch(e) {}
+}
+function loadStoredData() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY_DATA);
+    if (!s) return;
+    DB = JSON.parse(s);
+    // re-apply done state from done storage (source of truth)
+    const doneSet = loadDone();
+    DB = DB.map(d => ({ ...d, done: doneSet.has(d.company) }));
+    DB = sortDB(DB);
+    renderAll();
+    loadBookmark();
+  } catch(e) {}
+}
+
+// ══════════════════════════════════
+// TOAST
+// ══════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const el = g('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ══════════════════════════════════
+// UTIL
+// ══════════════════════════════════
+function g(id) { return document.getElementById(id); }
+
+// ══════════════════════════════════
+// INIT
+// ══════════════════════════════════
+loadStoredData();
 </script>
 </body>
 </html>
