@@ -283,6 +283,38 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .close-list{display:flex;flex-direction:column;gap:7px;margin-top:8px}
 .close-item{display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--card);border-radius:var(--rs);border:1px solid rgba(5,150,105,.15)}
 
+/* ── INDUSTRY TARGET ── */
+.ind-target-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:18px}
+.ind-target-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:15px;transition:.2s;cursor:default}
+.ind-target-card:hover{border-color:var(--bdg);box-shadow:0 3px 14px rgba(92,61,232,.08)}
+.ind-tc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ind-tc-name{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+.ind-tc-cnt{font-family:'Space Mono',monospace;font-size:10px;color:var(--ac);background:rgba(92,61,232,.08);padding:2px 7px;border-radius:20px}
+.ind-tc-need{font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap}
+.ind-need-high{background:#FEF2F2;color:#DC2626}
+.ind-need-mid{background:#FEF3C7;color:#D97706}
+.ind-tc-point{font-size:11px;color:var(--t2);margin-bottom:8px;line-height:1.5}
+.ind-tc-msg{font-size:11px;background:var(--c2);border-left:3px solid var(--ac);border-radius:0 5px 5px 0;padding:7px 10px;color:var(--t2);line-height:1.6;white-space:pre-line;margin-bottom:7px}
+.ind-tc-actions{display:flex;gap:6px;flex-wrap:wrap}
+.ind-tc-btn{font-size:10px;padding:4px 9px;border-radius:5px;border:1px solid var(--bd);background:var(--c2);color:var(--t2);cursor:pointer;font-family:'Pretendard',sans-serif;font-weight:500;transition:.2s}
+.ind-tc-btn:hover{border-color:var(--ac);color:var(--ac)}
+.ind-tc-btn.primary{background:linear-gradient(135deg,var(--ac2),var(--ac));color:#fff;border:none;font-weight:600}
+
+/* company list inside industry card */
+.ind-co-list{display:flex;flex-direction:column;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)}
+.ind-co-row{display:flex;align-items:center;gap:7px;font-size:11px}
+.ind-co-name{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ind-co-email{font-size:10px;color:var(--ok);display:flex;align-items:center;gap:2px}
+.ind-co-no-email{font-size:10px;color:var(--err)}
+.ind-co-extract{font-size:10px;color:var(--ac);cursor:pointer;font-weight:500;white-space:nowrap}
+.ind-co-extract:hover{text-decoration:underline}
+
+/* email extract progress */
+.email-extract-bar{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:13px 16px;margin-bottom:14px;display:none}
+.email-extract-bar.show{display:block}
+.ee-title{font-size:12px;font-weight:600;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between}
+.ee-log{font-size:10px;color:var(--t3);max-height:60px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+
 /* ── MODAL ── */
 .mo{position:fixed;inset:0;background:rgba(26,21,53,.4);backdrop-filter:blur(4px);z-index:400;display:none;align-items:center;justify-content:center}
 .mo.op{display:flex}
@@ -489,6 +521,15 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <!-- ══ PLAN ══ -->
 <div id="pane-plan" class="pane">
+  <!-- 이메일 추출 진행 바 -->
+  <div class="email-extract-bar" id="emailExtractBar">
+    <div class="ee-title">
+      <span>📬 홈페이지에서 이메일 추출 중...</span>
+      <span id="eeProgress" style="font-family:'Space Mono',monospace;font-size:11px;color:var(--t3)">0/0</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="eeFill" style="width:0%"></div></div>
+    <div class="ee-log" id="eeLog"></div>
+  </div>
   <div id="planContent">
     <div class="empty" style="padding:70px 20px"><div class="ic">🎯</div><h3>영업 플랜 생성 대기 중</h3><p>엑셀 업로드 후 링크 분석을 실행하면 AI 플랜이 생성됩니다</p></div>
   </div>
@@ -1276,6 +1317,8 @@ function buildPlan(){
         </div>
       </div>
     </div>
+
+    ${renderIndTargetSection()}
   `;
 }
 
@@ -1288,6 +1331,329 @@ async function sendAction(id, actionLabel){
     openPanel(id);
   }
 }
+
+// ════════════════════════════════
+// 업종별 타겟 전략 DB
+// ════════════════════════════════
+const IND_STRATEGY = [
+  {
+    key:'교육', icon:'📚', need:'high',
+    keywords:['학원','교육','과외','어학','학습','유아','아동','보습','입시','교습'],
+    point:'온라인 강의 영상, 원장 소개, 커리큘럼 안내 영상 니즈 높음.\n학생·학부모 모집 광고 숏폼 수요 지속 증가 중.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 학원·교육기관에서\n온라인 강의 영상이나 원장 소개 영상 제작\n문의가 많이 들어오고 있어요.\n\n에이컷은 소스 파일만 주시면\n전담 에디터가 바로 편집해드리는 서비스입니다.\n\n샘플 1편 무료로 먼저 확인해보세요.\n→ aicut.co.kr`,
+    searchTip:'네이버 지도 "학원" 검색 → 홈페이지 URL 수집 → 이메일 추출',
+  },
+  {
+    key:'부동산', icon:'🏢', need:'high',
+    keywords:['부동산','공인중개','중개','매물','분양','임대','공인'],
+    point:'매물 소개 영상, 지역 시장 분석 영상 수요 급증.\n월정액 계약 시 매달 신규 매물 영상 자동화 가능.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 매물 소개 영상이 있는 중개사가\n그렇지 않은 곳보다 문의가 2~3배 많습니다.\n\n에이컷은 사진·소스 파일만 주시면\n매물 소개 영상을 월정액으로 제작해드려요.\n\n샘플 1편 무료 제공 중입니다.\n→ aicut.co.kr`,
+    searchTip:'부동산 플랫폼 공인중개사 목록에서 사무소 웹사이트 수집',
+  },
+  {
+    key:'병원/의원', icon:'🏥', need:'high',
+    keywords:['병원','의원','클리닉','치과','한의원','성형','피부과','내과','정형외과','산부인과'],
+    point:'시술 소개, 원장 인터뷰, 환자 후기 영상 니즈 높음.\n광고 규제 있어 정보성 영상 수요 증가 추세.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 병원·의원에서\n시술 소개나 원장님 인터뷰 영상을 통해\n신환을 모집하는 경우가 많아졌어요.\n\n에이컷은 촬영본만 주시면\n전담 에디터가 바로 편집해드립니다.\n\n샘플 1편 무료 확인 → aicut.co.kr`,
+    searchTip:'건강보험심사평가원 병원 목록 + 네이버 지도 홈페이지 URL 수집',
+  },
+  {
+    key:'뷰티/미용', icon:'💄', need:'high',
+    keywords:['뷰티','미용','헤어','네일','피부','스킨케어','화장품','코스메틱','살롱'],
+    point:'시술 전후 비포애프터, SNS 숏폼 수요 매우 높음.\n인스타·유튜브 채널 운영하는 샵 타겟팅 효과적.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n인스타그램·유튜브에 올릴\n숏폼 영상 제작 고민되시지 않으세요?\n\n에이컷은 촬영본만 주시면\n시술 전후 영상, 리뷰 영상을\n월정액으로 정기 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
+    searchTip:'네이버 지도 "헤어샵/뷰티샵" 검색 → 인스타 채널 있는 곳 우선',
+  },
+  {
+    key:'식음료/F&B', icon:'🍽️', need:'mid',
+    keywords:['카페','레스토랑','식당','베이커리','디저트','주점','바','푸드','치킨','피자','분식'],
+    point:'메뉴 소개 숏폼, 매장 분위기 영상 SNS 바이럴 효과 높음.\n시즌별·이벤트별 콘텐츠 정기 제작 수요 있음.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 인스타·유튜브에\n메뉴 영상 올리면 방문객이 눈에 띄게 늘어요.\n\n에이컷은 촬영본만 주시면\n숏폼 영상을 월정액으로 제작해드립니다.\n\n샘플 1편 무료 확인 → aicut.co.kr`,
+    searchTip:'배달의민족·카카오맵 인기 매장 목록에서 SNS 있는 곳 우선 수집',
+  },
+  {
+    key:'헬스/피트니스', icon:'💪', need:'high',
+    keywords:['헬스','피트니스','PT','필라테스','요가','크로스핏','스포츠','수영','골프','테니스'],
+    point:'운동 가이드 영상, 회원 모집 광고 숏폼 수요 높음.\n PT샵·필라테스 원장 개인 브랜딩 영상 증가 추세.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 피트니스·필라테스 센터에서\n회원 모집용 숏폼 영상 효과가 굉장히 좋더라고요.\n\n에이컷은 촬영본만 주시면\n운동 가이드·회원모집 영상을\n월정액으로 정기 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
+    searchTip:'네이버 지도 "피트니스/필라테스" 검색 → 웹사이트 있는 곳 타겟',
+  },
+  {
+    key:'법무/세무/회계', icon:'⚖️', need:'mid',
+    keywords:['법무사','변호사','법률','세무사','세무','회계','공인회계사','노무','변리사'],
+    point:'전문가 신뢰도 강화용 영상, 법률 정보 콘텐츠 수요 증가.\n유튜브 채널 운영하는 전문직 사무소 타겟 효과적.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 법률·세무 분야에서\n전문성을 보여주는 영상 콘텐츠가\n신규 고객 유치에 큰 효과를 내고 있어요.\n\n에이컷은 정기 콘텐츠를\n월정액으로 편하게 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
+    searchTip:'대한변호사협회 회원 검색 + 개인 법무사 홈페이지 보유 여부 확인',
+  },
+  {
+    key:'건설/인테리어', icon:'🏗️', need:'mid',
+    keywords:['건설','인테리어','시공','리모델링','건축','설계','인테리어디자인','공사'],
+    point:'시공 전후 비포애프터 영상, 포트폴리오 영상 수요 높음.\n유튜브·인스타 운영하는 인테리어 업체 타겟 적합.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n시공 전후 영상 하나가\n수백 장의 사진보다 더 강력한 포트폴리오가 돼요.\n\n에이컷은 현장 영상만 주시면\n전문 편집으로 바로 납품해드립니다.\n\n샘플 1편 무료 확인 → aicut.co.kr`,
+    searchTip:'인테리어 플랫폼(오늘의집, 집닥 등) 업체 목록 + 웹사이트 수집',
+  },
+  {
+    key:'여행/숙박', icon:'✈️', need:'mid',
+    keywords:['여행사','호텔','펜션','게스트하우스','숙박','리조트','여행','투어'],
+    point:'숙소·여행지 소개 영상, 체험 후기 숏폼 바이럴 효과 높음.\n네이버·에어비앤비 등록 펜션·숙박업체 타겟 효과적.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n요즘 숙소·여행지 영상 하나가\n예약률을 크게 올려준다는 거 아시죠?\n\n에이컷은 현장 촬영본만 주시면\n숙소 소개 영상을 월정액으로 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
+    searchTip:'에어비앤비·야놀자 숙박업체 목록에서 개인 웹사이트 보유 업체 수집',
+  },
+  {
+    key:'쇼핑몰/이커머스', icon:'🛍️', need:'high',
+    keywords:['쇼핑몰','이커머스','온라인쇼핑','판매','스토어','쿠팡','네이버스토어','셀러'],
+    point:'상품 소개 영상, 개봉기 숏폼 전환율 향상 직결.\n정기적으로 신상품이 나오는 셀러 월정액 계약 유효.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n상품 페이지에 영상 하나만 추가해도\n구매 전환율이 올라가는 거 경험해보셨나요?\n\n에이컷은 제품 촬영본·이미지만 주시면\n상품 소개 영상을 월정액으로 제작해드립니다.\n\n샘플 1편 무료 확인 → aicut.co.kr`,
+    searchTip:'스마트스토어 인기 셀러 목록 + 자사몰 운영 여부 확인 후 수집',
+  },
+  {
+    key:'스타트업/IT', icon:'🚀', need:'mid',
+    keywords:['스타트업','테크','IT','앱','SaaS','플랫폼','소프트웨어','개발사','AI'],
+    point:'서비스 소개 영상, 투자 IR 덱 영상, 팀 소개 영상 수요.\n초기 스타트업일수록 영상 제작 인력 없어 외주 의존.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n서비스 소개 영상이나 팀 소개 영상\n직접 제작하기엔 시간이 너무 부족하시죠?\n\n에이컷은 서비스 설명 자료만 주시면\n소개 영상을 빠르게 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
+    searchTip:'스타트업 DB(THE VC, 크런치베이스) 초기 스타트업 목록 수집',
+  },
+  {
+    key:'자동차/모빌리티', icon:'🚗', need:'mid',
+    keywords:['자동차','중고차','모빌리티','카센터','튜닝','렌터카','딜러','카드'],
+    point:'차량 소개 영상, 시승 후기, 정비 가이드 유튜브 콘텐츠 수요.\n중고차 딜러·수입차 전시장 타겟 효과적.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n차량 소개·시승 영상 있는 딜러가\n없는 곳보다 문의가 훨씬 많이 옵니다.\n\n에이컷은 촬영본만 주시면\n차량 소개 영상을 월정액으로 제작해드려요.\n\n샘플 1편 무료 → aicut.co.kr`,
+    searchTip:'엔카·KB차차차 딜러 목록에서 독립 웹사이트 보유 딜러 수집',
+  },
+  {
+    key:'패션/의류', icon:'👗', need:'high',
+    keywords:['패션','의류','쇼핑','브랜드','아울렛','편집샵','스트릿','디자이너'],
+    point:'신상품 룩북 영상, SNS 숏폼 대량 제작 수요 매우 높음.\n인스타·틱톡 운영하는 패션 브랜드 타겟 적합.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n신상품 나올 때마다 룩북 영상 만들기\n너무 번거롭고 비용도 크시죠?\n\n에이컷은 샘플·촬영본만 주시면\n월정액으로 꾸준히 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
+    searchTip:'무신사·지그재그 입점 브랜드 중 독립 쇼핑몰 운영 업체 수집',
+  },
+  {
+    key:'금융/보험', icon:'💰', need:'mid',
+    keywords:['금융','보험','투자','증권','대출','캐피탈','저축','신협','새마을금고'],
+    point:'금융 상품 설명 영상, FA 개인 브랜딩 영상 수요 증가.\n컴플라이언스 준수하는 정보성 영상 제작 역량 필요.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n금융·보험 상품 설명 영상이\n고객 이해도와 신뢰도를 크게 높여준다는 거\n알고 계시죠?\n\n에이컷은 전문 금융 콘텐츠 영상을\n월정액으로 정기 제작해드립니다.\n\n샘플 1편 무료 → aicut.co.kr`,
+    searchTip:'금융감독원 금융회사 검색 + FA·설계사 개인 블로그/SNS 보유자 수집',
+  },
+  {
+    key:'종교/비영리', icon:'🙏', need:'low',
+    keywords:['교회','절','사찰','성당','NGO','비영리','재단','협회','단체','봉사'],
+    point:'예배·행사 영상 정기 편집, 캠페인 홍보 영상 수요 있음.\n예산 제약 있어 월정액 가성비 어필이 핵심.',
+    msg:(co)=>`안녕하세요, ${co} 담당자님.\n\n예배·행사 영상 편집에\n많은 시간이 소요되시지 않나요?\n\n에이컷은 촬영본만 주시면\n합리적인 월정액으로 정기 편집해드립니다.\n\n샘플 1편 무료 확인 → aicut.co.kr`,
+    searchTip:'각 종교 단체 공식 웹사이트 담당자 이메일 수집',
+  },
+];
+
+// 내 DB에서 업종별 기업 매칭
+function matchIndTargets(){
+  const result={};
+  for(const ind of IND_STRATEGY){
+    const matched=DB.filter(d=>{
+      const t=(d.industry+' '+d.company).toLowerCase();
+      return ind.keywords.some(k=>t.includes(k.toLowerCase()));
+    });
+    result[ind.key]=matched;
+  }
+  return result;
+}
+
+// ════════════════════════════════
+// 홈페이지 → 이메일 추출
+// ════════════════════════════════
+async function extractEmailFromSite(url){
+  try{
+    const html=await fetchViaProxy(url);
+    // 이메일 패턴 추출
+    const emailRe=/([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,6})/g;
+    const found=new Set();
+    let m;
+    while((m=emailRe.exec(html))!==null){
+      const email=m[1].toLowerCase();
+      // 필터: 이미지/스타일/스크립트 내 노이즈 제거
+      if(email.includes('.png')||email.includes('.jpg')||email.includes('.css')||email.includes('.js')) continue;
+      if(email.endsWith('.co')||email.endsWith('.kr')||email.includes('@')){
+        found.add(email);
+      }
+    }
+    // contact/about 페이지도 시도
+    if(found.size===0){
+      const contactUrls=[
+        url.replace(/\/$/, '')+'/contact',
+        url.replace(/\/$/, '')+'/about',
+        url.replace(/\/$/, '')+'/연락처',
+      ];
+      for(const cu of contactUrls){
+        try{
+          const ch=await fetchViaProxy(cu);
+          while((m=emailRe.exec(ch))!==null){
+            const email=m[1].toLowerCase();
+            if(!email.includes('.png')&&!email.includes('.jpg')) found.add(email);
+          }
+          if(found.size>0) break;
+        }catch(e){}
+      }
+    }
+    return [...found].filter(e=>e.includes('.')&&e.includes('@')).slice(0,3);
+  }catch(e){ return []; }
+}
+
+// 특정 기업 이메일 추출 (단건)
+async function extractOneEmail(id){
+  const i=DB.findIndex(d=>d.id===id); if(i<0) return;
+  const d=DB[i];
+  const url=d.website||d.link;
+  if(!url){ toast('⚠️ 웹사이트 URL이 없습니다','wa'); return; }
+  toast(`🔍 ${d.company} 이메일 추출 중...`,'');
+  const emails=await extractEmailFromSite(url);
+  if(emails.length){
+    DB[i].email=emails[0];
+    if(emails.length>1) DB[i].memo=(DB[i].memo?DB[i].memo+'\n':'')+`추가 이메일: ${emails.slice(1).join(', ')}`;
+    save(); updateAll();
+    toast(`✅ ${d.company} 이메일 추출: ${emails[0]}`,'ok');
+  } else {
+    toast(`⚠️ ${d.company} 이메일을 찾지 못했습니다`,'wa');
+  }
+}
+
+// 업종 내 이메일 없는 기업 일괄 추출
+async function extractEmailsBulk(indKey){
+  const targets=DB.filter(d=>{
+    const t=(d.industry+' '+d.company).toLowerCase();
+    const ind=IND_STRATEGY.find(x=>x.key===indKey);
+    if(!ind) return false;
+    return ind.keywords.some(k=>t.includes(k.toLowerCase()))&&!d.email&&(d.website||d.link);
+  });
+  if(!targets.length){ toast('이메일 추출할 기업이 없습니다 (웹사이트 URL 필요)','wa'); return; }
+
+  const bar=g('emailExtractBar'); bar.classList.add('show');
+  const fill=g('eeFill'), prog=g('eeProgress'), log=g('eeLog');
+  const addLog=(msg,ok)=>{ const el=document.createElement('div'); el.style.color=ok?'var(--ok)':'var(--err)'; el.textContent=(ok?'✓ ':'✗ ')+msg; log.appendChild(el); log.scrollTop=log.scrollHeight; };
+
+  let done=0, found=0;
+  for(const d of targets){
+    prog.textContent=`${done+1}/${targets.length}`;
+    const idx=DB.findIndex(x=>x.id===d.id);
+    const url=d.website||d.link;
+    try{
+      const emails=await extractEmailFromSite(url);
+      if(emails.length&&idx>=0){
+        DB[idx].email=emails[0];
+        found++;
+        addLog(`${d.company}: ${emails[0]}`,true);
+      } else {
+        addLog(`${d.company}: 이메일 없음`,false);
+      }
+    }catch(e){ addLog(`${d.company}: 실패`,false); }
+    done++;
+    fill.style.width=Math.round(done/targets.length*100)+'%';
+    await new Promise(r=>setTimeout(r,500));
+  }
+  save(); updateAll();
+  toast(`✅ ${indKey} 업종 이메일 추출 완료 — ${found}개 수집 / ${targets.length}개 시도`,'ok');
+  setTimeout(()=>bar.classList.remove('show'),5000);
+}
+
+// buildPlan에 업종별 타겟 섹션 추가 렌더
+function renderIndTargetSection(){
+  const matched=matchIndTargets();
+  const noEmail=DB.filter(d=>!d.email&&(d.website||d.link)).length;
+
+  return `
+    <div class="sec" style="margin-top:4px">🏢 업종별 마케팅 제안 타겟</div>
+    <div style="background:rgba(92,61,232,.04);border:1px solid var(--bd);border-radius:var(--r);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="font-size:12px;color:var(--t2)">
+        💡 <strong>공고 없어도 업종만 있으면 제안 가능</strong> — 15개 업종 맞춤 메시지 자동 생성
+        ${noEmail>0?`<span style="margin-left:10px;font-size:11px;color:var(--warn)">📬 웹사이트 URL 보유 ${noEmail}개 기업 이메일 미수집</span>`:''}
+      </div>
+      <button onclick="extractEmailsBulk('전체')" style="font-size:11px;padding:5px 12px;background:linear-gradient(135deg,var(--ac2),var(--ac));color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:'Pretendard',sans-serif;font-weight:600">
+        📬 전체 이메일 일괄 추출
+      </button>
+    </div>
+    <div class="ind-target-grid">
+      ${IND_STRATEGY.map(ind=>{
+        const companies=matched[ind.key]||[];
+        const withEmail=companies.filter(d=>d.email);
+        const noEmailCo=companies.filter(d=>!d.email&&(d.website||d.link));
+        const needBadge=ind.need==='high'?'<span class="ind-tc-need ind-need-high">🔥 HIGH</span>':ind.need==='mid'?'<span class="ind-tc-need ind-need-mid">⭐ MID</span>':'<span class="ind-tc-need" style="background:#F0F1F7;color:#9592B0">LOW</span>';
+        return `<div class="ind-target-card">
+          <div class="ind-tc-header">
+            <div class="ind-tc-name">${ind.icon} ${ind.key}</div>
+            <div style="display:flex;align-items:center;gap:5px">
+              ${needBadge}
+              ${companies.length?`<span class="ind-tc-cnt">DB ${companies.length}개</span>`:''}
+            </div>
+          </div>
+          <div class="ind-tc-point">${ind.point}</div>
+          <div class="ind-tc-msg">${eh(ind.msg('[회사명]'))}</div>
+          <div class="ind-tc-actions">
+            <button class="ind-tc-btn primary" onclick="copyIndMsg('${ind.key}')">📋 메시지 복사</button>
+            ${noEmailCo.length?`<button class="ind-tc-btn" onclick="extractEmailsBulk('${ind.key}')">📬 이메일 추출 (${noEmailCo.length})</button>`:''}
+            ${companies.length?`<button class="ind-tc-btn" onclick="filterToIndCompanies('${ind.key}')">목록 보기 (${companies.length})</button>`:''}
+          </div>
+          ${companies.length?`
+          <div class="ind-co-list">
+            ${companies.slice(0,4).map(d=>`
+              <div class="ind-co-row">
+                <span class="ind-co-name" title="${eh(d.company)}">${eh(d.company)}</span>
+                ${d.email
+                  ?`<span class="ind-co-email">✅ <a class="lnk" href="mailto:${eh(d.email)}">${eh(d.email)}</a></span>`
+                  :(d.website||d.link)
+                    ?`<span class="ind-co-extract" onclick="extractOneEmail(${d.id})">📬 이메일 추출</span>`
+                    :`<span class="ind-co-no-email">❌ URL없음</span>`
+                }
+              </div>`).join('')}
+            ${companies.length>4?`<div style="font-size:10px;color:var(--t3);padding-top:3px">+${companies.length-4}개 더 있음 · <span style="color:var(--ac);cursor:pointer" onclick="filterToIndCompanies('${ind.key}')">전체보기</span></div>`:''}
+          </div>`:'<div style="font-size:10px;color:var(--t3);padding-top:6px">💡 ${ind.searchTip}</div>'}
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+// 업종별 메시지 복사
+function copyIndMsg(indKey){
+  const ind=IND_STRATEGY.find(x=>x.key===indKey); if(!ind) return;
+  navigator.clipboard.writeText(ind.msg('[회사명]'))
+    .then(()=>toast(`📋 ${indKey} 제안 메시지 복사 완료`,'ok'))
+    .catch(()=>toast('복사 실패','wa'));
+}
+
+// 해당 업종 기업 목록으로 이동
+function filterToIndCompanies(indKey){
+  swTab('companies',document.querySelectorAll('.tb')[1]);
+  const ind=IND_STRATEGY.find(x=>x.key===indKey); if(!ind) return;
+  const srch=g('cardSrch'); if(srch){ srch.value=indKey; }
+  setCardFilter('all',g('cf-all'));
+}
+
+// extractEmailsBulk 전체 버전
+const _origExtract=extractEmailsBulk;
+extractEmailsBulk=async function(indKey){
+  if(indKey==='전체'){
+    // 모든 업종 이메일 없고 URL 있는 기업
+    const targets=DB.filter(d=>!d.email&&(d.website||d.link));
+    if(!targets.length){ toast('웹사이트 URL 보유 기업 중 이메일 없는 곳이 없습니다','wa'); return; }
+    const bar=g('emailExtractBar'); bar.classList.add('show');
+    const fill=g('eeFill'),prog=g('eeProgress'),log=g('eeLog');
+    const addLog=(msg,ok)=>{ const el=document.createElement('div'); el.style.color=ok?'var(--ok)':'var(--err)'; el.textContent=(ok?'✓ ':'✗ ')+msg; log.appendChild(el); log.scrollTop=log.scrollHeight; };
+    let done=0,found=0;
+    for(const d of targets){
+      prog.textContent=`${done+1}/${targets.length}`;
+      const idx=DB.findIndex(x=>x.id===d.id);
+      try{
+        const emails=await extractEmailFromSite(d.website||d.link);
+        if(emails.length&&idx>=0){ DB[idx].email=emails[0]; found++; addLog(`${d.company}: ${emails[0]}`,true); }
+        else addLog(`${d.company}: 없음`,false);
+      }catch(e){ addLog(`${d.company}: 실패`,false); }
+      done++; fill.style.width=Math.round(done/targets.length*100)+'%';
+      await new Promise(r=>setTimeout(r,400));
+    }
+    save(); updateAll();
+    toast(`✅ 전체 이메일 추출 완료 — ${found}개 수집`,'ok');
+    setTimeout(()=>bar.classList.remove('show'),5000);
+  } else {
+    await _origExtract(indKey);
+  }
+};
 
 // ════════════════════════════════
 // TAB / TOAST / INIT
