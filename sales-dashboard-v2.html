@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AICUT 영업 대시보드 v2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=Space+Mono:wght@700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f4f5f8;
+  --card:#fff;
+  --border:#e8e8f0;
+  --purple:#6c63ff;
+  --purple-light:#f0efff;
+  --purple-dark:#5a52d5;
+  --high:#ef4444;
+  --high-bg:#fff1f1;
+  --mid:#f59e0b;
+  --mid-bg:#fffbeb;
+  --text:#1a1a2e;
+  --text2:#555570;
+  --text3:#9898b0;
+  --done-bg:#f8f8fb;
+  --done-text:#b0b0c8;
+  --green:#10b981;
+}
+
+body{
+  font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  font-size:14px;
+}
+
+/* ── HEADER ── */
+.header{
+  background:#fff;
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;
+  top:0;
+  z-index:100;
+  gap:16px;
+}
+.logo{
+  display:flex;align-items:center;gap:9px;flex-shrink:0;
+}
+.logo-mark{
+  width:32px;height:32px;
+  background:linear-gradient(135deg,#5a52d5,#6c63ff);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Mono',monospace;
+  font-size:10px;font-weight:700;color:#fff;letter-spacing:-0.5px;
+}
+.logo-text{font-size:15px;font-weight:700;color:var(--text)}
+.logo-text em{color:var(--purple);font-style:normal}
+
+.header-stats{
+  display:flex;align-items:center;gap:6px;
+  background:var(--bg);
+  border-radius:10px;
+  padding:6px 12px;
+  border:1px solid var(--border);
+}
+.stat-item{
+  display:flex;align-items:center;gap:5px;
+  font-size:12px;font-weight:500;color:var(--text2);
+  padding:0 10px;
+}
+.stat-item:not(:last-child){border-right:1px solid var(--border)}
+.stat-val{
+  font-family:'Space Mono',monospace;
+  font-size:13px;font-weight:700;color:var(--purple);
+}
+
+.upload-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 16px;
+  background:var(--purple);
+  color:#fff;
+  border:none;border-radius:9px;
+  font-family:'Pretendard',sans-serif;
+  font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .2s;
+  flex-shrink:0;
+  box-shadow:0 2px 8px rgba(108,99,255,.3);
+}
+.upload-btn:hover{background:var(--purple-dark);transform:translateY(-1px);box-shadow:0 4px 14px rgba(108,99,255,.4)}
+.upload-btn svg{width:14px;height:14px}
+#fileInput{display:none}
+
+/* ── LAYOUT ── */
+.layout{
+  display:grid;
+  grid-template-columns:60% 40%;
+  height:calc(100vh - 58px);
+  overflow:hidden;
+}
+
+/* ── LEFT PANEL ── */
+.left-panel{
+  display:flex;flex-direction:column;
+  border-right:1px solid var(--border);
+  overflow:hidden;
+  background:var(--bg);
+}
+
+/* bookmark bar */
+.bookmark-bar{
+  background:linear-gradient(90deg,#6c63ff08,transparent);
+  border-bottom:1px solid var(--border);
+  padding:8px 18px;
+  font-size:12px;color:var(--text2);
+  display:flex;align-items:center;gap:6px;
+  min-height:36px;
+}
+.bookmark-bar.hidden{display:none}
+.bookmark-name{font-weight:600;color:var(--purple)}
+.bookmark-clear{
+  margin-left:auto;font-size:11px;color:var(--text3);
+  cursor:pointer;text-decoration:underline;
+}
+.bookmark-clear:hover{color:var(--purple)}
+
+/* tabs */
+.tab-bar{
+  display:flex;align-items:center;gap:0;
+  background:#fff;
+  border-bottom:2px solid var(--border);
+  padding:0 14px;
+  overflow-x:auto;
+  flex-shrink:0;
+}
+.tab-bar::-webkit-scrollbar{height:0}
+.tab-btn{
+  padding:11px 14px;
+  border:none;background:none;
+  font-family:'Pretendard',sans-serif;
+  font-size:12px;font-weight:500;color:var(--text3);
+  cursor:pointer;transition:all .15s;
+  border-bottom:2px solid transparent;
+  margin-bottom:-2px;
+  white-space:nowrap;
+}
+.tab-btn.on{color:var(--purple);font-weight:700;border-bottom-color:var(--purple)}
+.tab-btn:hover:not(.on){color:var(--text2)}
+.tab-cnt{
+  font-size:10px;background:var(--border);color:var(--text3);
+  padding:1px 5px;border-radius:10px;margin-left:3px;
+}
+.tab-btn.on .tab-cnt{background:var(--purple-light);color:var(--purple)}
+
+/* card list */
+.card-list{
+  flex:1;overflow-y:auto;
+  padding:12px 14px;
+  display:flex;flex-direction:column;gap:7px;
+}
+.card-list::-webkit-scrollbar{width:5px}
+.card-list::-webkit-scrollbar-thumb{background:rgba(108,99,255,.18);border-radius:3px}
+
+/* empty state */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;padding:40px 20px;text-align:center;
+}
+.empty-state .ic{font-size:48px;margin-bottom:14px;opacity:.35}
+.empty-state h3{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.empty-state p{font-size:12px;color:var(--text3);line-height:1.6}
+
+/* ── COMPANY CARD ── */
+.company-card{
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:11px;
+  padding:12px 14px;
+  cursor:pointer;
+  transition:all .18s;
+  display:flex;align-items:center;gap:10px;
+  position:relative;
+}
+.company-card:hover:not(.done):not(.no-email){
+  border-color:rgba(108,99,255,.4);
+  box-shadow:0 2px 12px rgba(108,99,255,.1);
+}
+.company-card.selected{
+  border-color:var(--purple);
+  box-shadow:0 2px 14px rgba(108,99,255,.2);
+  background:#fdfcff;
+}
+.company-card.done{
+  background:var(--done-bg);
+  border-color:#e8e8f0;
+  opacity:.7;
+  cursor:default;
+}
+.company-card.no-email{
+  opacity:.45;cursor:default;
+}
+
+.card-num{
+  font-family:'Space Mono',monospace;
+  font-size:11px;font-weight:700;
+  color:var(--text3);
+  width:22px;text-align:center;flex-shrink:0;
+}
+.company-card.selected .card-num{color:var(--purple)}
+
+.card-body{flex:1;min-width:0}
+.card-top{display:flex;align-items:center;gap:5px;margin-bottom:3px;flex-wrap:wrap}
+.card-name{
+  font-size:13px;font-weight:700;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.company-card.done .card-name,.company-card.done .card-email{color:var(--done-text)}
+.card-email{font-size:11px;color:var(--text3)}
+.company-card.selected .card-email{color:var(--purple);opacity:.8}
+
+/* badges */
+.badge{
+  display:inline-flex;align-items:center;
+  font-size:10px;font-weight:700;
+  padding:2px 6px;border-radius:5px;
+  white-space:nowrap;flex-shrink:0;
+}
+.badge-high{background:var(--high-bg);color:var(--high)}
+.badge-mid{background:var(--mid-bg);color:var(--mid)}
+.badge-ind{background:var(--purple-light);color:var(--purple)}
+.badge-done{background:#e8e8f0;color:var(--done-text)}
+.badge-noemail{background:#f1f5f9;color:#94a3b8}
+
+/* done button */
+.done-btn{
+  flex-shrink:0;
+  padding:5px 11px;
+  border-radius:7px;
+  border:1.5px solid var(--border);
+  background:#fff;
+  font-family:'Pretendard',sans-serif;
+  font-size:11px;font-weight:600;color:var(--text3);
+  cursor:pointer;transition:all .15s;
+  white-space:nowrap;
+}
+.done-btn:hover{border-color:var(--green);color:var(--green);background:#f0fdf4}
+.done-btn.is-done{
+  background:#f0fdf4;border-color:var(--green);
+  color:var(--green);cursor:default;
+}
+.company-card.no-email .done-btn{display:none}
+
+/* ── RIGHT PANEL ── */
+.right-panel{
+  display:flex;flex-direction:column;
+  background:#fff;
+  overflow:hidden;
+}
+.right-panel-inner{
+  flex:1;overflow-y:auto;
+  padding:20px;
+}
+.right-panel-inner::-webkit-scrollbar{width:5px}
+.right-panel-inner::-webkit-scrollbar-thumb{background:rgba(108,99,255,.18);border-radius:3px}
+
+.panel-empty{
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  height:100%;text-align:center;
+  color:var(--text3);
+}
+.panel-empty .ic{font-size:52px;margin-bottom:16px;opacity:.25}
+.panel-empty p{font-size:13px;line-height:1.7}
+
+/* mail panel */
+.mail-panel{}
+.mail-company{
+  font-size:18px;font-weight:800;color:var(--text);
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.mail-company small{
+  font-size:12px;font-weight:500;color:var(--text3);
+}
+
+.panel-label{
+  font-size:10px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;color:var(--text3);
+  margin-bottom:6px;display:block;
+}
+
+/* template select */
+.tmpl-select{
+  width:100%;padding:9px 12px;
+  border:1.5px solid var(--border);border-radius:9px;
+  background:#fff;color:var(--text);
+  font-family:'Pretendard',sans-serif;
+  font-size:13px;font-weight:500;
+  outline:none;cursor:pointer;
+  margin-bottom:16px;
+  transition:border-color .15s;
+}
+.tmpl-select:focus{border-color:var(--purple)}
+
+/* subject row */
+.subject-row{
+  display:flex;gap:8px;align-items:stretch;
+  margin-bottom:14px;
+}
+.subject-input{
+  flex:1;padding:9px 12px;
+  border:1.5px solid var(--border);border-radius:9px;
+  background:#fff;color:var(--text);
+  font-family:'Pretendard',sans-serif;font-size:13px;
+  outline:none;transition:border-color .15s;
+}
+.subject-input:focus{border-color:var(--purple)}
+
+/* body textarea */
+.body-wrap{position:relative;margin-bottom:14px}
+.body-textarea{
+  width:100%;min-height:380px;
+  padding:12px 14px;
+  border:1.5px solid var(--border);border-radius:11px;
+  background:#fff;color:var(--text);
+  font-family:'Pretendard',sans-serif;font-size:13px;
+  line-height:1.75;
+  outline:none;resize:vertical;
+  transition:border-color .15s;
+}
+.body-textarea:focus{border-color:var(--purple)}
+
+/* copy buttons */
+.copy-btn{
+  display:flex;align-items:center;gap:5px;
+  padding:8px 14px;border-radius:8px;
+  border:none;
+  background:var(--purple);color:#fff;
+  font-family:'Pretendard',sans-serif;
+  font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .15s;
+  white-space:nowrap;flex-shrink:0;
+}
+.copy-btn:hover{background:var(--purple-dark)}
+.copy-btn.copied{background:var(--green)}
+.copy-btn-full{width:100%;justify-content:center;padding:10px}
+
+/* footer preview */
+.footer-preview{
+  background:#f8f8fb;
+  border:1.5px dashed var(--border);
+  border-radius:9px;
+  padding:12px 14px;
+  font-size:11px;color:var(--text3);
+  line-height:1.7;
+  margin-top:4px;
+}
+.footer-preview strong{color:var(--purple)}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:#1a1a2e;color:#fff;
+  padding:10px 20px;border-radius:25px;
+  font-size:13px;font-weight:600;
+  z-index:9999;opacity:0;
+  transition:all .3s;
+  pointer-events:none;
+  display:flex;align-items:center;gap:7px;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* scrollbar global */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:rgba(108,99,255,.15);border-radius:3px}
+
+/* responsive */
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr;grid-template-rows:50vh 50vh}
+  .header-stats{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">AC</div>
+    <div class="logo-text">AI<em>CUT</em> 영업 대시보드</div>
+  </div>
+
+  <div class="header-stats">
+    <div class="stat-item">
+      📬 이메일 보유 <span class="stat-val" id="statEmail">0</span>개
+    </div>
+    <div class="stat-item">
+      ✅ 발송완료 <span class="stat-val" id="statDone">0</span>개
+    </div>
+    <div class="stat-item">
+      📍 남은 곳 <span class="stat-val" id="statLeft">0</span>개
+    </div>
+  </div>
+
+  <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    엑셀 업로드
+  </button>
+  <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleUpload(event)">
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+
+    <!-- bookmark -->
+    <div class="bookmark-bar hidden" id="bookmarkBar">
+      <span>🔖 지난번 여기까지:</span>
+      <span class="bookmark-name" id="bookmarkName"></span>
+      <span id="bookmarkNum" style="color:var(--text3)"></span>
+      <span class="bookmark-clear" onclick="clearBookmark()">초기화</span>
+    </div>
+
+    <!-- tabs -->
+    <div class="tab-bar" id="tabBar">
+      <button class="tab-btn on" data-ind="전체" onclick="setTab(this)">전체 <span class="tab-cnt" id="cnt-전체">0</span></button>
+      <button class="tab-btn" data-ind="교육" onclick="setTab(this)">교육 <span class="tab-cnt" id="cnt-교육">0</span></button>
+      <button class="tab-btn" data-ind="부동산" onclick="setTab(this)">부동산 <span class="tab-cnt" id="cnt-부동산">0</span></button>
+      <button class="tab-btn" data-ind="이커머스" onclick="setTab(this)">이커머스 <span class="tab-cnt" id="cnt-이커머스">0</span></button>
+      <button class="tab-btn" data-ind="프랜차이즈" onclick="setTab(this)">프랜차이즈 <span class="tab-cnt" id="cnt-프랜차이즈">0</span></button>
+      <button class="tab-btn" data-ind="병원" onclick="setTab(this)">병원 <span class="tab-cnt" id="cnt-병원">0</span></button>
+      <button class="tab-btn" data-ind="미디어" onclick="setTab(this)">미디어 <span class="tab-cnt" id="cnt-미디어">0</span></button>
+      <button class="tab-btn" data-ind="광고" onclick="setTab(this)">광고 <span class="tab-cnt" id="cnt-광고">0</span></button>
+      <button class="tab-btn" data-ind="기타" onclick="setTab(this)">기타 <span class="tab-cnt" id="cnt-기타">0</span></button>
+    </div>
+
+    <!-- card list -->
+    <div class="card-list" id="cardList">
+      <div class="empty-state">
+        <div class="ic">📂</div>
+        <h3>엑셀 파일을 업로드하세요</h3>
+        <p>회사명, 이메일 컬럼이 포함된<br>.xlsx 또는 .csv 파일을 올려주세요</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="right-panel-inner" id="rightPanel">
+      <div class="panel-empty">
+        <div class="ic">✉️</div>
+        <p>왼쪽에서 기업을 선택하면<br>업종에 맞는 메일 템플릿이<br>자동으로 표시됩니다</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════
+// DATA
+// ══════════════════════════════════
+let DB = [];
+let selectedId = null;
+let currentTab = '전체';
+
+const STORAGE_KEY_DATA  = 'aicut_v2_data';
+const STORAGE_KEY_DONE  = 'aicut_v2_done';
+const STORAGE_KEY_MARK  = 'aicut_v2_bookmark';
+
+// ══════════════════════════════════
+// INDUSTRY KEYWORDS
+// ══════════════════════════════════
+const IND_KEYWORDS = {
+  '교육':      ['학원','교육','아카데미','스쿨','클래스','캠퍼스','강의','인강','에듀'],
+  '부동산':    ['부동산','공인중개','분양','리얼티','임대','중개사','매물'],
+  '이커머스':  ['쇼핑','몰','커머스','마켓','스토어','쇼핑몰','온라인','셀러','shop'],
+  '프랜차이즈':['프랜차이즈','가맹','체인','FC본사'],
+  '병원':      ['병원','의원','클리닉','의료','한의원','치과','성형','피부','안과','정형'],
+  '미디어':    ['미디어','유튜브','콘텐츠','채널','MCN','방송','스튜디오'],
+  '광고':      ['광고','마케팅','홍보','에이전시','대행','PR'],
+};
+
+function classifyInd(company='', rawInd='') {
+  const text = (company + ' ' + rawInd).toLowerCase();
+  for (const [ind, kws] of Object.entries(IND_KEYWORDS)) {
+    if (kws.some(k => text.includes(k.toLowerCase()))) return ind;
+  }
+  return '기타';
+}
+
+function classifyPriority(rawPriority='', ind='') {
+  const v = String(rawPriority).toLowerCase();
+  if (v.includes('high') || v.includes('높') || v === '1') return 'high';
+  if (v.includes('mid') || v.includes('중') || v === '2') return 'mid';
+  // 업종 기반 자동 우선순위
+  if (['교육','병원','이커머스','프랜차이즈'].includes(ind)) return 'high';
+  if (['부동산','미디어','광고'].includes(ind)) return 'mid';
+  return 'mid';
+}
+
+// ══════════════════════════════════
+// MAIL TEMPLATES
+// ══════════════════════════════════
+const FOOTER = `
+---
+AICUT | AI 영상 편집 서비스
+master@aicut.co.kr | aicut.co.kr
+수신거부: master@aicut.co.kr로 '수신거부' 제목으로 회신해 주세요.`;
+
+const TEMPLATES = {
+  '교육형': {
+    label: '📚 교육형',
+    matchInd: ['교육'],
+    subject: (co) => `[${co}] 강의 영상, 편집에 얼마나 걸리고 계세요?`,
+    body: (co) => `안녕하세요, ${co} 담당자님
+
+강의 콘텐츠를 인상깊게 봤습니다.
+
+말실수 컷, 자막 삽입, 챕터 구분, 썸네일까지
+반복되는 작업인데 매번 사람을 찾거나
+내부에서 처리하고 계시진 않으신가요?
+
+저희 에이컷은 교육 콘텐츠 전담 편집팀으로
+강의 영상 포맷을 한 번만 세팅하면
+이후 소스 전달 후 48시간 안에 납품합니다.
+
+✅ 편당 단가 8만원부터
+✅ 월 20편 이상 대량 할인 가능
+✅ 자막 스타일·인트로·아웃트로 고정 세팅
+
+현재 월 제작량이 어떻게 되시는지
+알려주시면 맞춤 견적 드리겠습니다.
+
+에이컷 서비스 확인 → aicut.co.kr
+
+감사합니다.${FOOTER}`,
+  },
+  '부동산형': {
+    label: '🏢 부동산형',
+    matchInd: ['부동산'],
+    subject: (co) => `[${co}] 매물 영상, 매번 새로 만들기 번거로우시죠?`,
+    body: (co) => `안녕하세요, ${co} 담당자님
+
+매물 영상 잘 보고 있습니다.
+
+매물이 바뀔 때마다 편집자 찾고, 소통하고,
+수정하는 과정이 생각보다 오래 걸리지 않으신가요?
+
+저희 에이컷은 부동산 영상 포맷을
+한 번 세팅해두면 소스만 보내주시면
+48시간 내 편집 완료해 드립니다.
+
+✅ 편당 15만원부터
+✅ 월 10편 이상 고정 계약 시 할인
+✅ 자막, BGM, 로고 삽입 포함
+✅ 수정 2회 기본 포함
+
+한 달 무료 샘플 편집 제안드릴 수 있습니다.
+
+에이컷 서비스 확인 → aicut.co.kr
+
+감사합니다.${FOOTER}`,
+  },
+  '이커머스형': {
+    label: '🛍️ 이커머스형',
+    matchInd: ['이커머스'],
+    subject: (co) => `[${co}] 신제품 영상, 매번 제작하기 부담되지 않으세요?`,
+    body: (co) => `안녕하세요, ${co} 담당자님
+
+제품 영상 인상깊게 봤습니다.
+
+신제품이 나올 때마다 촬영·편집·업로드까지
+내부에서 다 처리하기엔 한계가 있으시죠.
+
+저희 에이컷은 제품 숏폼 영상 전문 편집팀으로
+촬영본만 보내주시면
+15~60초 제품 영상을 48시간 내 납품합니다.
+
+✅ 숏폼 편당 5~10만원
+✅ 월 20편 이상 대량 패키지 별도 협의
+✅ 쿠팡·스마트스토어·릴스 포맷 모두 지원
+✅ 썸네일 제작 포함
+
+현재 월 몇 편 정도 제작하시는지
+알려주시면 맞춤 패키지 제안드리겠습니다.
+
+에이컷 서비스 확인 → aicut.co.kr
+
+감사합니다.${FOOTER}`,
+  },
+  '프랜차이즈형': {
+    label: '🍽️ 프랜차이즈형',
+    matchInd: ['프랜차이즈'],
+    subject: (co) => `[${co}] 시즌 영상, 매번 외주 맡기고 계신가요?`,
+    body: (co) => `안녕하세요, ${co} 담당자님
+
+마케팅 콘텐츠를 보고 연락드렸습니다.
+
+시즌마다 신메뉴·가맹모집·캠페인 영상이
+반복적으로 필요하시죠.
+
+매번 외주 업체를 찾고 브랜드 가이드라인을
+다시 설명하는 과정이 피로하지 않으신가요?
+
+저희 에이컷은 브랜드 가이드라인을
+한 번 세팅하면 이후 모든 영상에
+자동으로 적용해서 납품합니다.
+
+✅ 월정액 990,000원에 10편
+✅ 브랜드 템플릿 고정 세팅 무료
+✅ 시즌 캠페인 영상 우선 처리
+
+담당자분과 15분만 미팅 가능하신가요?
+
+에이컷 서비스 확인 → aicut.co.kr
+
+감사합니다.${FOOTER}`,
+  },
+  '병원형': {
+    label: '🏥 병원형',
+    matchInd: ['병원'],
+    subject: (co) => `[${co}] 유튜브 영상 한 편에 100만원, 계속 이렇게 하실 건가요?`,
+    body: (co) => `안녕하세요, ${co} 담당자님
+
+유튜브 채널 잘 보고 있습니다.
+
+병원 유튜브는 꾸준히 올리는 것이 핵심인데
+편당 100만원 이상의 비용이 부담되시진 않으신가요?
+
+저희 에이컷은 의료 콘텐츠 편집 전담팀으로
+촬영본만 보내주시면
+자막·챕터·인트로·썸네일까지 48시간 내 완성합니다.
+
+✅ 편당 30만원부터 (기존 대비 70% 절감)
+✅ 월 4~8편 정기 계약 시 추가 할인
+✅ 수정 2회 기본 포함
+
+첫 1편 무료 샘플 제작 제안드립니다.
+
+에이컷 서비스 확인 → aicut.co.kr
+
+감사합니다.${FOOTER}`,
+  },
+};
+
+const TMPL_KEYS = Object.keys(TEMPLATES);
+
+function getDefaultTemplate(ind) {
+  for (const [key, t] of Object.entries(TEMPLATES)) {
+    if (t.matchInd.includes(ind)) return key;
+  }
+  // fallback by ind
+  if (['미디어','광고','기타'].includes(ind)) return '이커머스형';
+  return '교육형';
+}
+
+// ══════════════════════════════════
+// UPLOAD & PARSE
+// ══════════════════════════════════
+function handleUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      let raw;
+      if (ext === 'csv') {
+        const wb = XLSX.read(ev.target.result, { type: 'string' });
+        raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { raw: false, defval: '' });
+      } else {
+        const wb = XLSX.read(ev.target.result, { type: 'array' });
+        raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { raw: false, defval: '' });
+      }
+      if (!raw.length) { showToast('⚠️ 데이터가 없습니다'); return; }
+      parseData(raw);
+    } catch(err) { showToast('❌ 파일 파싱 오류'); console.error(err); }
+  };
+  ext === 'csv' ? reader.readAsText(file, 'UTF-8') : reader.readAsArrayBuffer(file);
+  e.target.value = '';
+}
+
+const COL_ALIASES = {
+  company:  ['회사명','기업명','업체명','상호명','company','name'],
+  email:    ['이메일','email','e-mail','mail'],
+  industry: ['업종','산업','분야','industry','sector','카테고리'],
+  priority: ['우선순위','priority','중요도','등급'],
+};
+
+function detectCol(headers) {
+  const r = {}, lo = headers.map(h => String(h).toLowerCase().trim());
+  for (const [k, al] of Object.entries(COL_ALIASES)) {
+    for (const a of al) {
+      const i = lo.findIndex(h => h.includes(a.toLowerCase()));
+      if (i >= 0) { r[k] = headers[i]; break; }
+    }
+  }
+  return r;
+}
+
+function parseData(raw) {
+  const headers = Object.keys(raw[0]);
+  const cm = detectCol(headers);
+  const doneSet = loadDone();
+
+  const parsed = raw.map((row, i) => {
+    const company  = tr(row[cm.company]  || row[headers[0]] || `기업${i+1}`);
+    const email    = tr(row[cm.email]    || '').toLowerCase();
+    const rawInd   = tr(row[cm.industry] || '');
+    const rawPri   = tr(row[cm.priority] || '');
+    const ind      = classifyInd(company, rawInd);
+    const priority = classifyPriority(rawPri, ind);
+    const hasEmail = email.includes('@');
+    const done     = doneSet.has(company);
+    return { id: i, company, email, ind, priority, hasEmail, done, rawInd };
+  });
+
+  DB = sortDB(parsed);
+  saveData();
+  renderAll();
+  showToast(`✅ ${DB.length}개 기업 로드 완료`);
+  loadBookmark();
+}
+
+function sortDB(data) {
+  return [...data].sort((a, b) => {
+    // done → bottom
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    // no email → near bottom
+    if (a.hasEmail !== b.hasEmail) return a.hasEmail ? -1 : 1;
+    // high → mid
+    const pr = { high: 0, mid: 1 };
+    return (pr[a.priority] ?? 2) - (pr[b.priority] ?? 2);
+  });
+}
+
+function tr(v) { return String(v || '').trim(); }
+
+// ══════════════════════════════════
+// RENDER
+// ══════════════════════════════════
+function renderAll() {
+  updateStats();
+  updateTabCounts();
+  renderCards();
+}
+
+function updateStats() {
+  const withEmail = DB.filter(d => d.hasEmail).length;
+  const done = DB.filter(d => d.done).length;
+  const left = DB.filter(d => d.hasEmail && !d.done).length;
+  g('statEmail').textContent = withEmail;
+  g('statDone').textContent  = done;
+  g('statLeft').textContent  = left;
+}
+
+function updateTabCounts() {
+  const inds = ['전체','교육','부동산','이커머스','프랜차이즈','병원','미디어','광고','기타'];
+  const active = DB.filter(d => !d.done && d.hasEmail);
+  inds.forEach(ind => {
+    const el = g('cnt-' + ind);
+    if (!el) return;
+    const cnt = ind === '전체' ? active.length : active.filter(d => d.ind === ind).length;
+    el.textContent = cnt;
+  });
+}
+
+function renderCards() {
+  const list = g('cardList');
+  let data = currentTab === '전체' ? DB : DB.filter(d => d.ind === currentTab);
+
+  if (!data.length && DB.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="ic">📂</div>
+      <h3>엑셀 파일을 업로드하세요</h3>
+      <p>회사명, 이메일 컬럼이 포함된<br>.xlsx 또는 .csv 파일을 올려주세요</p>
+    </div>`;
+    return;
+  }
+
+  if (!data.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="ic">🔍</div>
+      <h3>해당 업종 기업이 없습니다</h3>
+      <p>다른 탭을 선택해보세요</p>
+    </div>`;
+    return;
+  }
+
+  // global serial number across full DB
+  list.innerHTML = data.map(d => {
+    const globalNum = DB.indexOf(d) + 1;
+    const isSelected = d.id === selectedId;
+    const priLabel = d.priority === 'high'
+      ? '<span class="badge badge-high">🔥HIGH</span>'
+      : '<span class="badge badge-mid">⭐MID</span>';
+    const indLabel = `<span class="badge badge-ind">${d.ind}</span>`;
+    const doneLabel = d.done ? '<span class="badge badge-done">✅ 발송완료</span>' : '';
+    const noEmailLabel = !d.hasEmail ? '<span class="badge badge-noemail">이메일없음</span>' : '';
+
+    const cardClass = [
+      'company-card',
+      isSelected ? 'selected' : '',
+      d.done ? 'done' : '',
+      !d.hasEmail ? 'no-email' : '',
+    ].filter(Boolean).join(' ');
+
+    const btnClass = d.done ? 'done-btn is-done' : 'done-btn';
+    const btnText  = d.done ? '✅ 발송완료' : '발송완료';
+
+    return `<div class="${cardClass}" id="card-${d.id}" onclick="selectCard(${d.id})">
+      <div class="card-num">${globalNum}</div>
+      <div class="card-body">
+        <div class="card-top">
+          ${!d.done && d.hasEmail ? priLabel : ''}
+          ${indLabel}
+          ${doneLabel}${noEmailLabel}
+        </div>
+        <div class="card-name">${esc(d.company)}</div>
+        <div class="card-email">${d.hasEmail ? esc(d.email) : '이메일 정보 없음'}</div>
+      </div>
+      ${d.hasEmail ? `<button class="${btnClass}" onclick="toggleDone(event,${d.id})">${btnText}</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════
+// SELECT & MAIL PANEL
+// ══════════════════════════════════
+function selectCard(id) {
+  const d = DB.find(x => x.id === id);
+  if (!d || d.done || !d.hasEmail) return;
+
+  selectedId = id;
+  renderCards(); // re-highlight
+  renderMailPanel(d);
+
+  // save bookmark
+  const globalNum = DB.indexOf(d) + 1;
+  saveBookmark(d.company, globalNum);
+  showBookmark(d.company, globalNum);
+}
+
+function renderMailPanel(d) {
+  const defaultTmpl = getDefaultTemplate(d.ind);
+  const tmplOptions = TMPL_KEYS.map(k =>
+    `<option value="${k}" ${k === defaultTmpl ? 'selected' : ''}>${TEMPLATES[k].label}</option>`
+  ).join('');
+
+  const subj = TEMPLATES[defaultTmpl].subject(d.company);
+  const body = TEMPLATES[defaultTmpl].body(d.company);
+
+  g('rightPanel').innerHTML = `
+    <div class="mail-panel">
+      <div class="mail-company">
+        ${esc(d.company)}
+        <small>${esc(d.ind)}</small>
+      </div>
+
+      <label class="panel-label">템플릿 선택</label>
+      <select class="tmpl-select" id="tmplSelect" onchange="onTmplChange('${esc(d.company)}')">
+        ${tmplOptions}
+      </select>
+
+      <label class="panel-label">제목</label>
+      <div class="subject-row">
+        <input class="subject-input" id="subjInput" type="text" value="${esc(subj)}">
+        <button class="copy-btn" onclick="copySubject()" id="copySubjBtn">
+          📋 제목 복사
+        </button>
+      </div>
+
+      <label class="panel-label">본문</label>
+      <div class="body-wrap">
+        <textarea class="body-textarea" id="bodyInput">${esc(body)}</textarea>
+      </div>
+      <button class="copy-btn copy-btn-full" onclick="copyBody()" id="copyBodyBtn">
+        📋 본문 복사
+      </button>
+
+      <div style="margin-top:16px">
+        <label class="panel-label">이메일 수신자</label>
+        <div style="font-size:13px;color:var(--purple);font-weight:600;padding:8px 12px;background:var(--purple-light);border-radius:8px">
+          📧 ${esc(d.email)}
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <label class="panel-label">발송 후 푸터 미리보기</label>
+        <div class="footer-preview">
+          <strong>AICUT</strong> | AI 영상 편집 서비스<br>
+          master@aicut.co.kr &nbsp;|&nbsp; aicut.co.kr<br>
+          <span style="font-size:10px">수신거부: master@aicut.co.kr로 '수신거부' 제목으로 회신해 주세요.</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function onTmplChange(company) {
+  const key = g('tmplSelect').value;
+  const t = TEMPLATES[key];
+  if (!t) return;
+  g('subjInput').value = t.subject(company);
+  g('bodyInput').value = t.body(company);
+}
+
+// ══════════════════════════════════
+// COPY
+// ══════════════════════════════════
+function copySubject() {
+  const val = g('subjInput').value;
+  copyText(val, 'copySubjBtn', '📋 제목 복사');
+}
+
+function copyBody() {
+  const val = g('bodyInput').value;
+  copyText(val, 'copyBodyBtn', '📋 본문 복사');
+}
+
+function copyText(text, btnId, originalLabel) {
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      showToast('📋 복사됐습니다!');
+      const btn = g(btnId);
+      if (btn) {
+        btn.textContent = '✅ 복사됨!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = originalLabel;
+          btn.classList.remove('copied');
+        }, 1800);
+      }
+    })
+    .catch(() => showToast('복사 실패 — 직접 선택해주세요'));
+}
+
+// ══════════════════════════════════
+// DONE TOGGLE
+// ══════════════════════════════════
+function toggleDone(event, id) {
+  event.stopPropagation();
+  const idx = DB.findIndex(d => d.id === id);
+  if (idx < 0) return;
+
+  DB[idx].done = !DB[idx].done;
+  // re-sort
+  DB = sortDB(DB);
+
+  saveDone();
+  saveData();
+  renderAll();
+
+  if (DB[idx].done) {
+    showToast(`✅ ${DB[idx].company} 발송완료 처리`);
+    // if selected card was just done, clear panel
+    if (selectedId === id) {
+      selectedId = null;
+      g('rightPanel').innerHTML = `<div class="panel-empty">
+        <div class="ic">✅</div>
+        <p>발송완료 처리됐습니다.<br>다음 기업을 선택해주세요</p>
+      </div>`;
+    }
+  }
+}
+
+// ══════════════════════════════════
+// TABS
+// ══════════════════════════════════
+function setTab(btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  currentTab = btn.dataset.ind;
+  renderCards();
+}
+
+// ══════════════════════════════════
+// BOOKMARK
+// ══════════════════════════════════
+function saveBookmark(company, num) {
+  localStorage.setItem(STORAGE_KEY_MARK, JSON.stringify({ company, num }));
+}
+function loadBookmark() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY_MARK);
+    if (!s) return;
+    const { company, num } = JSON.parse(s);
+    showBookmark(company, num);
+  } catch(e) {}
+}
+function showBookmark(company, num) {
+  const bar = g('bookmarkBar');
+  bar.classList.remove('hidden');
+  g('bookmarkName').textContent = company;
+  g('bookmarkNum').textContent = `(${num}번)`;
+}
+function clearBookmark() {
+  localStorage.removeItem(STORAGE_KEY_MARK);
+  g('bookmarkBar').classList.add('hidden');
+  showToast('🔖 북마크 초기화');
+}
+
+// ══════════════════════════════════
+// STORAGE
+// ══════════════════════════════════
+function saveDone() {
+  const doneSet = new Set(DB.filter(d => d.done).map(d => d.company));
+  localStorage.setItem(STORAGE_KEY_DONE, JSON.stringify([...doneSet]));
+}
+function loadDone() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY_DONE);
+    return s ? new Set(JSON.parse(s)) : new Set();
+  } catch(e) { return new Set(); }
+}
+function saveData() {
+  try { localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(DB)); } catch(e) {}
+}
+function loadStoredData() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY_DATA);
+    if (!s) return;
+    DB = JSON.parse(s);
+    // re-apply done state from done storage (source of truth)
+    const doneSet = loadDone();
+    DB = DB.map(d => ({ ...d, done: doneSet.has(d.company) }));
+    DB = sortDB(DB);
+    renderAll();
+    loadBookmark();
+  } catch(e) {}
+}
+
+// ══════════════════════════════════
+// TOAST
+// ══════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const el = g('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ══════════════════════════════════
+// UTIL
+// ══════════════════════════════════
+function g(id) { return document.getElementById(id); }
+
+// ══════════════════════════════════
+// INIT
+// ══════════════════════════════════
+loadStoredData();
+</script>
+</body>
+</html>
