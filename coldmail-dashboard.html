@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AICUT 콜드메일 대시보드</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f4f5f8;color:#1a1a2e;font-size:14px;height:100vh;overflow:hidden}
+
+/* HEADER */
+.hd{height:56px;background:#fff;border-bottom:1px solid #e8e8f0;display:flex;align-items:center;padding:0 20px;gap:12px;z-index:10}
+.logo{font-size:15px;font-weight:800;flex-shrink:0}.logo em{color:#6c63ff;font-style:normal}
+.stats{display:flex;background:#f4f5f8;border:1px solid #e8e8f0;border-radius:9px;padding:5px 10px;font-size:12px;color:#555570;gap:0}
+.stat{padding:0 10px;display:flex;align-items:center;gap:4px}
+.stat:not(:last-child){border-right:1px solid #e8e8f0}
+.stat b{color:#6c63ff;font-family:monospace;font-size:13px;font-weight:700}
+.hd-r{margin-left:auto;display:flex;gap:8px}
+.btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;border:none}
+.btn-g{background:#fff;color:#10b981;border:1.5px solid #10b981}.btn-g:hover{background:#f0fdf4}
+.btn-p{background:#6c63ff;color:#fff}.btn-p:hover{background:#5a52d5}
+.btn svg{width:13px;height:13px;flex-shrink:0}
+
+/* LAYOUT */
+.layout{display:flex;height:calc(100vh - 56px)}
+
+/* LEFT */
+.left{width:40%;border-right:1px solid #e8e8f0;display:flex;flex-direction:column;overflow:hidden;background:#f4f5f8}
+.url-row{background:#fff;border-bottom:1px solid #e8e8f0;padding:10px 12px;display:flex;gap:7px}
+.url-inp{flex:1;padding:7px 10px;border:1.5px solid #e8e8f0;border-radius:8px;font-size:12px;color:#1a1a2e;outline:none}
+.url-inp:focus{border-color:#6c63ff}
+.url-inp::placeholder{color:#c0c0d0}
+.url-go{background:#6c63ff;color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.url-go:hover{background:#5a52d5}
+
+.ftabs{background:#fff;border-bottom:2px solid #e8e8f0;display:flex;flex-shrink:0}
+.ftab{padding:9px 15px;border:none;background:none;font-size:12px;font-weight:500;color:#9898b0;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.ftab.on{color:#6c63ff;font-weight:700;border-bottom-color:#6c63ff}
+
+.clist{flex:1;overflow-y:auto;padding:10px 11px;display:flex;flex-direction:column;gap:7px}
+.clist::-webkit-scrollbar{width:4px}
+.clist::-webkit-scrollbar-thumb{background:#ddd8ff;border-radius:2px}
+
+/* CARD */
+.card{background:#fff;border:2px solid #e8e8f0;border-radius:11px;padding:12px 13px;cursor:pointer;transition:all .15s}
+.card:hover:not(.c-done){border-color:#b8b4ff;box-shadow:0 2px 8px rgba(108,99,255,.08)}
+.card.c-sel{border-color:#6c63ff;background:#fdfdff;box-shadow:0 2px 14px rgba(108,99,255,.15)}
+.card.c-done{opacity:.55;cursor:default;background:#fafafa}
+.card.c-sent{border-color:#10b981}
+
+.c-row1{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px}
+.c-name{font-size:13px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-sub{font-size:11px;color:#9898b0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.c-sub span{display:flex;align-items:center;gap:3px}
+.c-btns{display:flex;gap:5px;margin-top:8px}
+
+.badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;white-space:nowrap}
+.b-hire{background:#fff1f1;color:#ef4444}
+.b-req{background:#f0efff;color:#6c63ff}
+.b-col{background:#ecfdf5;color:#10b981}
+.b-edu{background:#eff6ff;color:#3b82f6}
+.b-real{background:#fef9c3;color:#854d0e}
+.b-hosp{background:#fdf2f8;color:#9d174d}
+.b-med{background:#fff7ed;color:#9a3412}
+.b-done{background:#ecfdf5;color:#10b981}
+.b-wait{background:#f1f5f9;color:#64748b}
+.b-high{background:#fffbeb;color:#f59e0b}
+.sb{font-size:10px;padding:3px 9px;border-radius:5px;border:1.5px solid #e8e8f0;background:#fff;color:#555570;cursor:pointer;font-weight:500;white-space:nowrap}
+.sb:hover{border-color:#6c63ff;color:#6c63ff}
+.sb-open{border-color:#3b82f6;color:#3b82f6;background:#eff6ff}.sb-open:hover{background:#dbeafe}
+.sb-del{color:#ef4444;border-color:#fecaca}.sb-del:hover{background:#fff1f1}
+
+.empty-s{padding:50px 16px;text-align:center;color:#9898b0}
+.empty-s .ei{font-size:42px;margin-bottom:10px;opacity:.3}
+.empty-s p{font-size:12px;line-height:1.7}
+
+/* RIGHT */
+.right{flex:1;display:flex;flex-direction:column;background:#fff;overflow:hidden}
+.rpanel{flex:1;overflow-y:auto;padding:22px 24px}
+.rpanel::-webkit-scrollbar{width:4px}
+.rpanel::-webkit-scrollbar-thumb{background:#e8e8f0;border-radius:2px}
+.r-empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9898b0;text-align:center;padding:20px}
+.r-empty .ei{font-size:52px;margin-bottom:16px;opacity:.2}
+.r-empty p{font-size:13px;line-height:1.8}
+.r-empty small{font-size:11px;color:#c0c0d0;margin-top:8px;display:block}
+
+/* PANEL */
+.p-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #f0f0f8}
+.p-name{font-size:18px;font-weight:800;line-height:1.3}
+.p-meta{font-size:11px;color:#9898b0;margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.open-link{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:600;color:#2563eb;text-decoration:none;flex-shrink:0;transition:.15s}
+.open-link:hover{background:#dbeafe}
+.open-link svg{width:14px;height:14px}
+
+/* FORM SECTIONS */
+.fsec{margin-bottom:18px}
+.flbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#9898b0;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.flbl span{background:#6c63ff;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;letter-spacing:0}
+
+/* TYPE SELECTOR */
+.type-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:4px}
+.type-btn{padding:9px 6px;border:2px solid #e8e8f0;border-radius:9px;background:#fff;font-size:12px;font-weight:600;color:#555570;cursor:pointer;text-align:center;transition:.15s;line-height:1.4}
+.type-btn:hover{border-color:#b8b4ff;color:#6c63ff}
+.type-btn.on{border-color:#6c63ff;background:#f0efff;color:#6c63ff}
+.type-btn .te{font-size:16px;display:block;margin-bottom:3px}
+
+/* IND SELECTOR */
+.ind-wrap{display:flex;flex-wrap:wrap;gap:5px}
+.ind-btn{padding:5px 11px;border:1.5px solid #e8e8f0;border-radius:20px;background:#fff;font-size:11px;font-weight:500;color:#555570;cursor:pointer;transition:.15s}
+.ind-btn:hover{border-color:#b8b4ff;color:#6c63ff}
+.ind-btn.on{border-color:#6c63ff;background:#f0efff;color:#6c63ff;font-weight:700}
+
+/* MEMO */
+.memo-ta{width:100%;min-height:80px;padding:9px 11px;border:1.5px solid #e8e8f0;border-radius:9px;font-size:12px;color:#1a1a2e;resize:vertical;outline:none;line-height:1.65;font-family:inherit}
+.memo-ta:focus{border-color:#6c63ff}
+.memo-ta::placeholder{color:#c0c0d0}
+
+/* MAIL PREVIEW */
+.mail-preview{background:#f8f9ff;border:1.5px solid #e0deff;border-radius:11px;overflow:hidden;margin-bottom:16px}
+.mail-prev-head{background:#ede9ff;padding:10px 14px;font-size:11px;font-weight:700;color:#5a52d5;display:flex;align-items:center;gap:6px}
+.mail-subj-row{padding:10px 14px;border-bottom:1px solid #ede9ff;display:flex;align-items:center;gap:8px}
+.mail-subj-inp{flex:1;background:transparent;border:none;outline:none;font-size:13px;font-weight:600;color:#1a1a2e;font-family:inherit}
+.mail-body-wrap{padding:12px 14px}
+.mail-body-ta{width:100%;background:transparent;border:none;outline:none;font-size:12px;color:#1a1a2e;line-height:1.8;resize:none;min-height:280px;font-family:inherit}
+
+/* ACTION BUTTONS */
+.act-row{display:flex;gap:8px;margin-bottom:12px}
+.act-btn{flex:1;padding:11px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s}
+.act-btn svg{width:15px;height:15px;flex-shrink:0}
+.act-copy-subj{background:#f0efff;color:#6c63ff;border:1.5px solid #ddd8ff}.act-copy-subj:hover{background:#ede9ff}
+.act-copy-body{background:#6c63ff;color:#fff}.act-copy-body:hover{background:#5a52d5}
+.act-copy-body.ok{background:#10b981}
+.act-done{background:#fff;color:#10b981;border:2px solid #10b981}.act-done:hover{background:#f0fdf4}
+.act-done.already{background:#f0fdf4;color:#10b981;cursor:default;border-color:#a7f3d0}
+
+/* REGEN */
+.regen-btn{width:100%;padding:8px;background:transparent;border:1.5px dashed #ddd8ff;border-radius:8px;font-size:12px;color:#9898b0;cursor:pointer;font-family:inherit;transition:.15s}
+.regen-btn:hover{border-color:#6c63ff;color:#6c63ff;background:#fafaff}
+
+/* EXCEL MODAL */
+.mo{position:fixed;inset:0;background:rgba(26,21,53,.45);z-index:500;display:none;align-items:center;justify-content:center}
+.mo.open{display:flex}
+.mbox{background:#fff;border-radius:14px;padding:24px 26px;width:540px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.mbox h2{font-size:15px;font-weight:800;margin-bottom:3px}
+.mbox .msub{font-size:11px;color:#9898b0;margin-bottom:14px;line-height:1.6}
+.drop{border:2px dashed #e8e8f0;border-radius:10px;padding:30px 20px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:12px}
+.drop:hover,.drop.drag{border-color:#6c63ff;background:#fafaff}
+.drop .xi{font-size:34px;margin-bottom:7px}
+.drop p{font-size:12px;color:#9898b0}.drop b{color:#6c63ff}
+.prev-tbl{background:#f4f5f8;border-radius:8px;padding:10px 12px;margin-bottom:12px;display:none;max-height:130px;overflow-y:auto;font-size:11px}
+.prev-tbl table{width:100%;border-collapse:collapse}
+.prev-tbl th{background:#e8e8f0;padding:3px 7px;text-align:left;font-size:10px}
+.prev-tbl td{padding:3px 7px;border-bottom:1px solid #f0f0f8;font-size:10px}
+.map-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.map-row{display:flex;flex-direction:column;gap:3px}
+.map-row label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9898b0}
+.map-sel{padding:6px 9px;border:1.5px solid #e8e8f0;border-radius:6px;font-size:11px;color:#1a1a2e;background:#fff;outline:none;cursor:pointer}
+.map-sel:focus{border-color:#6c63ff}
+.mfoot{display:flex;gap:8px;justify-content:flex-end}
+.m-cancel{padding:7px 14px;border:1.5px solid #e8e8f0;border-radius:7px;background:#fff;font-size:12px;color:#555570;cursor:pointer}
+.m-ok{padding:7px 16px;background:#6c63ff;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer}
+.m-ok:hover{background:#5a52d5}
+.m-ok:disabled{background:#c0bdf8;cursor:not-allowed}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:#1a1a2e;color:#fff;padding:9px 22px;border-radius:24px;font-size:12px;font-weight:600;opacity:0;transition:all .25s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hd">
+  <div class="logo">AI<em>CUT</em> 콜드메일 대시보드</div>
+  <div class="stats">
+    <div class="stat">🔗 전체 <b id="sTotal">0</b></div>
+    <div class="stat">⏳ 대기 <b id="sWait">0</b></div>
+    <div class="stat">📧 메일완성 <b id="sMail">0</b></div>
+    <div class="stat">✅ 발송완료 <b id="sDone">0</b></div>
+  </div>
+  <div class="hd-r">
+    <button class="btn btn-g" onclick="xlOpen()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      엑셀 업로드
+    </button>
+    <button class="btn btn-p" onclick="G('urlInp').focus()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      링크 추가
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT: 링크 목록 -->
+  <div class="left">
+    <div class="url-row">
+      <input class="url-inp" id="urlInp" type="url" placeholder="https://... 공고 링크 입력 후 엔터">
+      <button class="url-go" id="urlGoBtn">추가</button>
+    </div>
+    <div class="ftabs">
+      <button class="ftab on" onclick="setTab('전체',this)">전체</button>
+      <button class="ftab" onclick="setTab('대기',this)">대기</button>
+      <button class="ftab" onclick="setTab('완성',this)">메일완성</button>
+      <button class="ftab" onclick="setTab('발송',this)">발송완료</button>
+    </div>
+    <div class="clist" id="clist">
+      <div class="empty-s"><div class="ei">🔗</div><p>공고 링크를 추가하거나<br>엑셀을 업로드하세요</p></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: 메일 생성 패널 -->
+  <div class="right">
+    <div class="rpanel" id="rpanel">
+      <div class="r-empty">
+        <div class="ei">✉️</div>
+        <p>왼쪽에서 항목을 클릭하세요<br><br>① 🌐 원본 링크 직접 확인<br>② 유형 · 업종 선택<br>③ 핵심 내용 메모<br>④ 메일 자동 생성<br>⑤ 복사 → 메일앱에 붙여넣기 → 발송</p>
+        <small>링크 분석 없이 직접 확인 후 발송하는 방식</small>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- EXCEL MODAL -->
+<div class="mo" id="xlMo" onclick="if(event.target===this)xlClose()">
+  <div class="mbox">
+    <h2>📊 엑셀 파일 업로드</h2>
+    <div class="msub">.xlsx · .xls · .csv 지원 · 여러 파일 동시 선택 가능<br>회사명, URL, 이메일, 업종 컬럼을 자동으로 인식합니다</div>
+    <div class="drop" id="xlDrop" onclick="G('xlFi').click()" ondragover="xlDov(event)" ondragleave="xlDol(event)" ondrop="xlDod(event)">
+      <div class="xi">📂</div>
+      <p id="xlDropTx"><b>클릭하거나 드래그</b>하세요</p>
+    </div>
+    <input type="file" id="xlFi" accept=".xlsx,.xls,.csv" multiple style="display:none" onchange="xlPicked(event)">
+    <div class="prev-tbl" id="xlPrev"></div>
+    <div class="map-grid" id="xlMapGrid" style="display:none">
+      <div class="map-row"><label>🏢 회사명</label><select class="map-sel" id="xmCo"></select></div>
+      <div class="map-row"><label>🔗 URL · 링크</label><select class="map-sel" id="xmUrl"></select></div>
+      <div class="map-row"><label>📧 이메일</label><select class="map-sel" id="xmEmail"></select></div>
+      <div class="map-row"><label>🏷 업종</label><select class="map-sel" id="xmInd"></select></div>
+    </div>
+    <div class="mfoot">
+      <button class="m-cancel" onclick="xlClose()">취소</button>
+      <button class="m-ok" id="xlOk" disabled onclick="xlImport()">가져오기</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ─────────────────────────────────────
+// 유틸
+// ─────────────────────────────────────
+function G(id){ return document.getElementById(id); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+var _tt;
+function toast(msg,dur){
+  var el=G('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(_tt); _tt=setTimeout(function(){ el.classList.remove('show'); },dur||2200);
+}
+
+// ─────────────────────────────────────
+// 상수
+// ─────────────────────────────────────
+var SK='ac_cold4', SK_MARK='ac_cold4_mark';
+
+// 업종 목록
+var INDS=[
+  {id:'edu',   label:'📚 교육/학원'},
+  {id:'real',  label:'🏢 부동산'},
+  {id:'hosp',  label:'🏥 병원/의원'},
+  {id:'beauty',label:'💄 뷰티/미용'},
+  {id:'food',  label:'🍽️ 식음료'},
+  {id:'fit',   label:'💪 헬스/피트니스'},
+  {id:'ecom',  label:'🛍️ 이커머스'},
+  {id:'fran',  label:'🍔 프랜차이즈'},
+  {id:'media', label:'🎬 미디어/유튜브'},
+  {id:'ad',    label:'📣 광고/마케팅'},
+  {id:'law',   label:'⚖️ 법무/세무'},
+  {id:'build', label:'🏗️ 건설/인테리어'},
+  {id:'etc',   label:'🔖 기타'},
+];
+
+// 공고 유형
+var TYPES=[
+  {id:'hire',  emoji:'👤', label:'채용형',  desc:'편집자 구함'},
+  {id:'req',   emoji:'📋', label:'의뢰형',  desc:'작업 외주'},
+  {id:'col',   emoji:'🤝', label:'협업형',  desc:'파트너 모집'},
+];
+
+var FOOTER='\n\n───────────────────\nAICUT | AI 영상 편집 서비스\nmaster@aicut.co.kr | aicut.co.kr\n수신거부: 본 메일에 회신해 주세요.';
+
+// 업종별 키워드 (엑셀 자동 분류용)
+var IND_KW={
+  edu:   ['학원','교육','아카데미','스쿨','클래스','강의','에듀','어학','캠퍼스'],
+  real:  ['부동산','공인중개','분양','리얼티','임대','매물','중개'],
+  hosp:  ['병원','의원','클리닉','의료','한의원','치과','성형','피부과','안과'],
+  beauty:['뷰티','미용','헤어','네일','살롱','피부','스킨케어'],
+  food:  ['식당','카페','레스토랑','베이커리','푸드','음식','프랜차이즈식','배달'],
+  fit:   ['헬스','피트니스','PT','필라테스','요가','크로스핏','스포츠'],
+  ecom:  ['쇼핑','몰','커머스','마켓','스토어','셀러','온라인'],
+  fran:  ['프랜차이즈','가맹','체인','본사'],
+  media: ['미디어','유튜브','콘텐츠','채널','MCN','방송','영상','스튜디오'],
+  ad:    ['광고','마케팅','홍보','에이전시','대행','PR'],
+  law:   ['법무','세무','변호사','법률','회계','노무'],
+  build: ['건설','인테리어','시공','리모델링','건축'],
+};
+
+// ─────────────────────────────────────
+// 메일 템플릿 (유형 × 업종)
+// ─────────────────────────────────────
+function genMail(item){
+  var co   = item.company || '담당자';
+  var memo = item.memo    || '';
+  var ind  = item.ind     || 'etc';
+  var type = item.type    || 'req';
+
+  // 업종별 포인트
+  var indPoints={
+    edu:   {need:'강의·교육 콘텐츠 영상',     angle:'강의 포맷 1회 세팅 → 이후 소스만 주시면 동일 퀄리티로 납품',  price:'편당 8만원부터'},
+    real:  {need:'매물 소개 영상',             angle:'매물 바뀔 때마다 소스만 주시면 48시간 내 편집 완료',         price:'편당 15만원부터'},
+    hosp:  {need:'시술 소개·원장 인터뷰 영상', angle:'의료 콘텐츠 전담팀 — 촬영본만 주시면 자막·썸네일까지 완성',  price:'편당 30만원부터'},
+    beauty:{need:'시술 전후·숏폼 영상',        angle:'인스타·틱톡용 숏폼을 월정액으로 꾸준히 제작',               price:'숏폼 월 4편 49만원'},
+    food:  {need:'메뉴·매장 소개 숏폼',        angle:'시즌·이벤트마다 소스만 주시면 빠르게 납품',                  price:'숏폼 월 4편 49만원'},
+    fit:   {need:'운동 가이드·회원 모집 영상',  angle:'회원 모집용 숏폼을 월정액으로 정기 제작',                   price:'숏폼 월 4편 49만원'},
+    ecom:  {need:'제품 소개·숏폼 영상',        angle:'촬영본만 주시면 15~60초 제품 영상을 48시간 내 납품',        price:'편당 5~10만원'},
+    fran:  {need:'캠페인·신메뉴 영상',         angle:'브랜드 가이드라인 1회 세팅 → 이후 모든 영상에 자동 적용',    price:'월정액 99만원 10편'},
+    media: {need:'유튜브·콘텐츠 편집',         angle:'소스 파일만 주시면 자막·챕터·썸네일까지 48시간 내 완성',     price:'편당 8만원부터'},
+    ad:    {need:'광고·마케팅 영상',            angle:'A/B 테스트용 다양한 버전을 빠르게 납품',                    price:'편당 8만원부터'},
+    law:   {need:'전문가 신뢰 영상',            angle:'법률·세무 정보 콘텐츠를 월정액으로 정기 제작',              price:'편당 20만원부터'},
+    build: {need:'시공 전후 포트폴리오 영상',   angle:'현장 영상만 주시면 비포애프터 영상으로 편집',               price:'편당 15만원부터'},
+    etc:   {need:'영상 편집',                   angle:'소스 파일만 주시면 48시간 내 납품',                        price:'편당 8만원부터'},
+  };
+  var ip=indPoints[ind]||indPoints.etc;
+
+  var subj='', body='';
+
+  if(type==='hire'){
+    subj='에이컷 — '+ip.need+' 담당자 채용, 저희가 대신 맡겠습니다';
+    body='안녕하세요'+(co!=='담당자'?', '+co+' 담당자님':'')+'.\n\n'
+      +ip.need+' 담당자를 채용하고 계시군요.\n\n'
+      +'잠깐, 채용 전에 한 가지 여쭤볼게요.\n'
+      +'편집자 한 명 채용하면 연봉·4대보험·퇴직금까지\n'
+      +'실질 비용이 연 3,000만원을 훌쩍 넘습니다.\n'
+      +'퇴사하면 처음부터 다시 시작해야 하고요.\n\n'
+      +'저희 에이컷은 '+ip.need+' 전담팀으로\n'
+      +ip.angle+'합니다.\n\n'
+      +'✅ 즉시 원격 투입 가능\n'
+      +'✅ 편집자 공백·이직 리스크 없음\n'
+      +'✅ 브랜드 톤 고정 — 일관된 퀄리티\n'
+      +'✅ '+ip.price+'\n'
+      +(memo?'\n'+memo+'\n':'\n')
+      +'샘플 1편 무료 제작 제안드립니다.\n'
+      +FOOTER;
+  } else if(type==='col'){
+    subj='에이컷 — '+ip.need+' 영상 편집 파트너로 협업 제안드립니다';
+    body='안녕하세요'+(co!=='담당자'?', '+co+' 담당자님':'')+'.\n\n'
+      +ip.need+' 관련 파트너를 찾고 계시는 걸 봤습니다.\n\n'
+      +'저희 에이컷은 '+ip.need+' 전담 편집팀으로\n'
+      +ip.angle+'합니다.\n\n'
+      +'✅ 안정적인 물량 처리 가능\n'
+      +'✅ 빠른 납품 — 48시간 기준\n'
+      +'✅ 장기 파트너십 우대\n'
+      +'✅ '+ip.price+'\n'
+      +(memo?'\n'+memo+'\n':'\n')
+      +'한 번 미팅이나 샘플 작업 먼저 제안드립니다.\n'
+      +FOOTER;
+  } else {
+    // 의뢰형 (기본)
+    subj='에이컷 — '+ip.need+', 48시간 내 납품드립니다';
+    body='안녕하세요'+(co!=='담당자'?', '+co+' 담당자님':'')+'.\n\n'
+      +ip.need+' 작업을 찾고 계시는 걸 봤습니다.\n\n'
+      +'저희 에이컷은 '+ip.need+' 전담 편집팀으로\n'
+      +ip.angle+'합니다.\n\n'
+      +'✅ 소스 파일만 주시면 바로 시작\n'
+      +'✅ 48시간 납품 보장\n'
+      +'✅ 수정 2회 기본 포함\n'
+      +'✅ '+ip.price+'\n'
+      +(memo?'\n'+memo+'\n':'\n')
+      +'샘플 1편 무료 제작 제안드립니다.\n'
+      +FOOTER;
+  }
+
+  return { subj: subj.trim(), body: body.trim() };
+}
+
+// ─────────────────────────────────────
+// 상태
+// ─────────────────────────────────────
+var DB=[], selId=null, curTab='전체';
+var xlRows=[], xlHeaders=[];
+
+// ─────────────────────────────────────
+// 초기화
+// ─────────────────────────────────────
+(function init(){
+  loadDB();
+  render();
+  // 엔터키
+  G('urlInp').addEventListener('keydown', function(e){ if(e.key==='Enter') addLink(); });
+  G('urlGoBtn').addEventListener('click', addLink);
+})();
+
+// ─────────────────────────────────────
+// 저장 / 로드
+// ─────────────────────────────────────
+function saveDB(){ try{ localStorage.setItem(SK, JSON.stringify(DB)); }catch(e){} }
+function loadDB(){ try{ var s=localStorage.getItem(SK); if(s) DB=JSON.parse(s); }catch(e){} }
+
+// ─────────────────────────────────────
+// 링크 추가
+// ─────────────────────────────────────
+function addLink(){
+  var raw=G('urlInp').value.trim(); if(!raw) return;
+  var url=raw.startsWith('http')?raw:'https://'+raw;
+  if(DB.find(function(d){return d.url===url;})){ toast('이미 등록된 링크입니다'); return; }
+  var entry=makeEntry({url:url});
+  DB.unshift(entry); saveDB();
+  G('urlInp').value='';
+  render();
+  selectCard(entry.id);
+}
+
+function makeEntry(opts){
+  var id=Date.now()+Math.random();
+  return {
+    id:id,
+    url:    opts.url     ||'',
+    company:opts.company ||'',
+    email:  opts.email   ||'',
+    ind:    opts.ind     ||'',
+    type:   opts.type    ||'',
+    memo:   opts.memo    ||'',
+    mailSubj:'', mailBody:'',
+    status: 'wait',   // wait | ready | done
+    sentAt: null,
+    createdAt: new Date().toLocaleDateString('ko-KR'),
+  };
+}
+
+// ─────────────────────────────────────
+// 렌더
+// ─────────────────────────────────────
+function render(){
+  renderStats();
+  renderCards();
+}
+
+function renderStats(){
+  G('sTotal').textContent = DB.length;
+  G('sWait').textContent  = DB.filter(function(d){return d.status==='wait';}).length;
+  G('sMail').textContent  = DB.filter(function(d){return d.status==='ready';}).length;
+  G('sDone').textContent  = DB.filter(function(d){return !!d.sentAt;}).length;
+}
+
+function renderCards(){
+  var list=G('clist');
+  var data=DB;
+  if(curTab==='대기')  data=DB.filter(function(d){return d.status==='wait';});
+  if(curTab==='완성')  data=DB.filter(function(d){return d.status==='ready';});
+  if(curTab==='발송')  data=DB.filter(function(d){return !!d.sentAt;});
+
+  if(!data.length){
+    list.innerHTML='<div class="empty-s"><div class="ei">'+(DB.length?'🔍':'🔗')+'</div><p>'
+      +(DB.length?'해당 항목이 없습니다':'공고 링크를 추가하거나<br>엑셀을 업로드하세요')+'</p></div>';
+    return;
+  }
+
+  list.innerHTML=data.map(function(d){
+    var isSel=d.id===selId;
+    var indObj=INDS.find(function(x){return x.id===d.ind;});
+    var typeObj=TYPES.find(function(x){return x.id===d.type;});
+    var stBadge=d.sentAt?'<span class="badge b-done">✅발송완료</span>':
+                d.status==='ready'?'<span class="badge" style="background:#f0efff;color:#6c63ff">📧메일완성</span>':
+                '<span class="badge b-wait">⏳대기</span>';
+    var cls='card'+(isSel?' c-sel':'')+(d.sentAt?' c-done':'')+(d.status==='ready'&&!d.sentAt?' c-sent':'');
+
+    return '<div class="'+cls+'" id="c'+d.id+'" data-id="'+d.id+'">'
+      +'<div class="c-row1">'
+      +(typeObj?'<span class="badge '+(d.type==='hire'?'b-hire':d.type==='col'?'b-col':'b-req')+'">'+typeObj.emoji+typeObj.label+'</span>':'')
+      +(indObj?'<span class="badge" style="background:#f8f8ff;color:#6b7280;font-weight:500">'+indObj.label+'</span>':'')
+      +stBadge
+      +'</div>'
+      +'<div class="c-name">'+esc(d.company||d.url.replace(/https?:\/\//,'').slice(0,35))+'</div>'
+      +'<div class="c-sub">'
+      +(d.email?'<span>📧'+esc(d.email.slice(0,28))+'</span>':'')
+      +(d.memo?'<span>📝'+esc(d.memo.slice(0,20))+'…</span>':'')
+      +'<span style="color:#c0c0d0">'+d.createdAt+'</span>'
+      +'</div>'
+      +'<div class="c-btns">'
+      +(d.url&&!d.url.startsWith('company://')?'<button class="sb sb-open" onclick="event.stopPropagation();window.open(\''+esc(d.url)+'\',\'_blank\')">🌐 원본보기</button>':'')
+      +(!d.sentAt?'<button class="sb" onclick="event.stopPropagation();markDone('+d.id+')">✅발송완료</button>':'')
+      +'<button class="sb sb-del" onclick="event.stopPropagation();delItem('+d.id+')">삭제</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+
+  list.onclick=function(e){
+    if(e.target.closest('button')) return;
+    var card=e.target.closest('.card'); if(!card) return;
+    selectCard(parseFloat(card.dataset.id));
+  };
+}
+
+// ─────────────────────────────────────
+// 카드 선택 → 패널 표시
+// ─────────────────────────────────────
+function selectCard(id){
+  var prev=G('c'+selId); if(prev) prev.classList.remove('c-sel');
+  selId=id;
+  var curr=G('c'+selId); if(curr) curr.classList.add('c-sel');
+  var d=DB.find(function(x){return x.id===id;}); if(!d) return;
+  showPanel(d);
+}
+
+// ─────────────────────────────────────
+// 오른쪽 패널
+// ─────────────────────────────────────
+function showPanel(d){
+  var rp=G('rpanel');
+
+  // 유형 버튼
+  var typeBtns=TYPES.map(function(t){
+    return '<button class="type-btn'+(d.type===t.id?' on':'')+'" onclick="setField('+d.id+',\'type\',\''+t.id+'\',this)">'
+      +'<span class="te">'+t.emoji+'</span>'+t.label+'<br><small style="font-size:10px;color:inherit;opacity:.7">'+t.desc+'</small>'
+      +'</button>';
+  }).join('');
+
+  // 업종 버튼
+  var indBtns=INDS.map(function(x){
+    return '<button class="ind-btn'+(d.ind===x.id?' on':'')+'" onclick="setField('+d.id+',\'ind\',\''+x.id+'\',this)">'+x.label+'</button>';
+  }).join('');
+
+  // 메일 미리보기
+  var mail=d.mailSubj?{subj:d.mailSubj,body:d.mailBody}:(d.type&&d.ind?genMail(d):{subj:'',body:''});
+
+  rp.innerHTML=
+    // 헤드
+    '<div class="p-head">'
+    +'<div>'
+    +'<div class="p-name">'+esc(d.company||'(회사명 없음)')+'</div>'
+    +'<div class="p-meta">'
+    +(d.email?'<span>📧 '+esc(d.email)+'</span>':'<span style="color:#fca5a5">이메일 없음</span>')
+    +'<span>'+d.createdAt+'</span>'
+    +'</div>'
+    +'</div>'
+    +(d.url&&!d.url.startsWith('company://')
+      ?'<a class="open-link" href="'+esc(d.url)+'" target="_blank" rel="noopener">'
+        +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 0 1 2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
+        +'원본 보기</a>'
+      :'')
+    +'</div>'
+
+    // 회사명
+    +'<div class="fsec">'
+    +'<div class="flbl">🏢 회사명</div>'
+    +'<input style="width:100%;padding:8px 11px;border:1.5px solid #e8e8f0;border-radius:8px;font-size:13px;outline:none;font-family:inherit" '
+    +'id="fCompany" value="'+esc(d.company)+'" placeholder="회사명 입력" '
+    +'oninput="upField('+d.id+',\'company\',this.value)">'
+    +'</div>'
+
+    // 이메일
+    +'<div class="fsec">'
+    +'<div class="flbl">📧 수신 이메일</div>'
+    +'<input style="width:100%;padding:8px 11px;border:1.5px solid #e8e8f0;border-radius:8px;font-size:13px;outline:none;font-family:inherit;color:#6c63ff;font-weight:600" '
+    +'id="fEmail" type="email" value="'+esc(d.email)+'" placeholder="이메일 주소" '
+    +'oninput="upField('+d.id+',\'email\',this.value)">'
+    +'</div>'
+
+    // 공고 유형
+    +'<div class="fsec">'
+    +'<div class="flbl">📌 공고 유형 <span>직접 확인 후 선택</span></div>'
+    +'<div class="type-grid" id="typeGrid">'+typeBtns+'</div>'
+    +'</div>'
+
+    // 업종
+    +'<div class="fsec">'
+    +'<div class="flbl">🏷 업종</div>'
+    +'<div class="ind-wrap" id="indWrap">'+indBtns+'</div>'
+    +'</div>'
+
+    // 메모
+    +'<div class="fsec">'
+    +'<div class="flbl">📝 핵심 내용 메모 <span>선택사항</span></div>'
+    +'<textarea class="memo-ta" id="fMemo" placeholder="공고 보고 느낀 핵심 포인트를 메모하세요&#10;예: 월 20편 제작 필요, 유튜브 채널 운영 중, 예산 충분해 보임...">'
+    +esc(d.memo)+'</textarea>'
+    +'</div>'
+
+    // 메일 미리보기
+    +'<div class="mail-preview">'
+    +'<div class="mail-prev-head">✉️ 자동 생성된 콜드메일 <span style="margin-left:auto;font-size:10px;font-weight:500;opacity:.7">유형·업종 선택 시 즉시 업데이트</span></div>'
+    +'<div class="mail-subj-row">'
+    +'<span style="font-size:10px;color:#9898b0;flex-shrink:0">제목</span>'
+    +'<input class="mail-subj-inp" id="mailSubj" value="'+esc(mail.subj)+'" placeholder="유형과 업종을 선택하면 자동 생성됩니다">'
+    +'</div>'
+    +'<div class="mail-body-wrap">'
+    +'<textarea class="mail-body-ta" id="mailBody">'+esc(mail.body)+'</textarea>'
+    +'</div>'
+    +'</div>'
+
+    // 액션 버튼
+    +'<div class="act-row">'
+    +'<button class="act-btn act-copy-subj" id="btnSubj">'
+    +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+    +'제목 복사</button>'
+    +'<button class="act-btn act-copy-body" id="btnBody">'
+    +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+    +'본문 복사</button>'
+    +'</div>'
+    +'<button class="act-btn act-done'+(d.sentAt?' already':'')+'" id="btnDone" style="margin-bottom:10px">'
+    +(d.sentAt?'✅ 발송완료 ('+d.sentAt+')':'✅ 발송완료 체크')
+    +'</button>'
+    +'<button class="regen-btn" id="btnRegen">🔄 메일 다시 생성</button>';
+
+  // 이벤트 연결 (innerHTML 후 안전하게)
+  G('fMemo').addEventListener('input', function(){
+    upField(d.id,'memo',this.value);
+  });
+
+  G('btnSubj').addEventListener('click', function(){
+    var val=G('mailSubj').value;
+    navigator.clipboard.writeText(val).then(function(){
+      toast('제목 복사됨!');
+      var btn=G('btnSubj'); btn.textContent='✓ 복사됨'; btn.style.background='#ecfdf5'; btn.style.color='#10b981';
+      setTimeout(function(){ btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>제목 복사'; btn.style.background=''; btn.style.color=''; },1500);
+    }).catch(function(){ toast('복사 실패'); });
+  });
+
+  G('btnBody').addEventListener('click', function(){
+    var val=G('mailBody').value;
+    navigator.clipboard.writeText(val).then(function(){
+      toast('📋 본문 복사됨! 메일앱에 붙여넣기하세요', 3000);
+      var btn=G('btnBody'); btn.classList.add('ok'); btn.textContent='✓ 복사됨!';
+      setTimeout(function(){ btn.classList.remove('ok'); btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>본문 복사'; },1800);
+      // 메일 저장
+      var idx=DB.findIndex(function(x){return x.id===d.id;});
+      if(idx>=0){ DB[idx].mailSubj=G('mailSubj').value; DB[idx].mailBody=val; DB[idx].status='ready'; saveDB(); renderStats(); renderCards(); }
+    }).catch(function(){ toast('복사 실패'); });
+  });
+
+  if(!d.sentAt){
+    G('btnDone').addEventListener('click', function(){ markDone(d.id); });
+  }
+
+  G('btnRegen').addEventListener('click', function(){
+    var idx=DB.findIndex(function(x){return x.id===d.id;});
+    if(idx<0) return;
+    DB[idx].memo=G('fMemo').value;
+    var m=genMail(DB[idx]);
+    G('mailSubj').value=m.subj; G('mailBody').value=m.body;
+    DB[idx].mailSubj=m.subj; DB[idx].mailBody=m.body;
+    saveDB(); toast('메일 재생성됨');
+  });
+}
+
+// 유형/업종 버튼 클릭 → 즉시 메일 재생성
+function setField(id, field, val, btn){
+  var idx=DB.findIndex(function(d){return d.id===id;}); if(idx<0) return;
+  DB[idx][field]=val;
+
+  // 버튼 UI 업데이트
+  var wrap=btn.parentElement;
+  wrap.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+
+  // 메일 즉시 재생성
+  if(DB[idx].type&&DB[idx].ind){
+    var m=genMail(DB[idx]);
+    DB[idx].mailSubj=m.subj; DB[idx].mailBody=m.body;
+    if(G('mailSubj')) G('mailSubj').value=m.subj;
+    if(G('mailBody')) G('mailBody').value=m.body;
+  }
+  saveDB();
+}
+
+function upField(id, field, val){
+  var idx=DB.findIndex(function(d){return d.id===id;}); if(idx<0) return;
+  DB[idx][field]=val; saveDB();
+}
+
+// ─────────────────────────────────────
+// 액션
+// ─────────────────────────────────────
+function markDone(id){
+  var idx=DB.findIndex(function(d){return d.id===id;}); if(idx<0) return;
+  DB[idx].sentAt=new Date().toLocaleDateString('ko-KR');
+  DB[idx].status='done';
+  saveDB(); render(); toast('✅ 발송완료 처리됐습니다');
+  var btn=G('btnDone');
+  if(btn){ btn.textContent='✅ 발송완료 ('+DB[idx].sentAt+')'; btn.classList.add('already'); btn.onclick=null; }
+  var card=G('c'+id);
+  if(card){ card.classList.add('c-done'); card.classList.remove('c-sent'); }
+}
+
+function delItem(id){
+  if(!confirm('삭제하시겠습니까?')) return;
+  DB=DB.filter(function(d){return d.id!==id;});
+  if(selId===id){
+    selId=null;
+    G('rpanel').innerHTML='<div class="r-empty"><div class="ei">🗑️</div><p>삭제됐습니다</p></div>';
+  }
+  saveDB(); render(); toast('삭제됐습니다');
+}
+
+function setTab(tab,btn){
+  curTab=tab;
+  document.querySelectorAll('.ftab').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on'); renderCards();
+}
+
+// ─────────────────────────────────────
+// 엑셀 업로드
+// ─────────────────────────────────────
+function xlOpen(){
+  xlRows=[]; xlHeaders=[];
+  G('xlPrev').style.display='none';
+  G('xlMapGrid').style.display='none';
+  G('xlOk').disabled=true;
+  G('xlDropTx').innerHTML='<b>클릭하거나 드래그</b>하세요';
+  G('xlMo').classList.add('open');
+}
+function xlClose(){ G('xlMo').classList.remove('open'); G('xlFi').value=''; }
+function xlDov(e){ e.preventDefault(); G('xlDrop').classList.add('drag'); }
+function xlDol(e){ G('xlDrop').classList.remove('drag'); }
+function xlDod(e){
+  e.preventDefault(); G('xlDrop').classList.remove('drag');
+  var files=Array.from(e.dataTransfer.files).filter(function(f){return /\.(xlsx|xls|csv)$/i.test(f.name);});
+  if(files.length) xlLoadAll(files);
+}
+function xlPicked(e){ var files=Array.from(e.target.files); if(files.length) xlLoadAll(files); }
+
+function xlLoadAll(files){
+  xlRows=[]; xlHeaders=[];
+  var total=files.length, done=0, allRows=[], errs=[];
+  function finish(){
+    allRows.forEach(function(f){ xlRows=xlRows.concat(f.rows); if(f.headers.length>xlHeaders.length) xlHeaders=f.headers; });
+    if(!xlRows.length){ toast('데이터가 없습니다'); return; }
+    G('xlDropTx').innerHTML='<b>'+(total>1?total+'개 파일 · ':'')+xlRows.length+'행 로드됨</b>'+(errs.length?' · ⚠️실패:'+errs.join(','):'');
+    // 미리보기
+    var prev=G('xlPrev'), pRows=xlRows.slice(0,4);
+    prev.style.display='block';
+    prev.innerHTML='<table><tr>'+xlHeaders.map(function(h){return '<th>'+esc(h)+'</th>';}).join('')+'</tr>'
+      +pRows.map(function(r){return '<tr>'+xlHeaders.map(function(h){return '<td>'+esc(String(r[h]||'').slice(0,22))+'</td>';}).join('')+'</tr>';}).join('')
+      +'</table><div style="margin-top:4px;color:#9898b0">총 '+xlRows.length+'행</div>';
+    // 컬럼 매핑
+    var none='<option value="">— 없음 —</option>';
+    var opts=xlHeaders.map(function(h){return '<option value="'+esc(h)+'">'+esc(h)+'</option>';}).join('');
+    function g2(al){ for(var i=0;i<al.length;i++) for(var j=0;j<xlHeaders.length;j++) if(xlHeaders[j].toLowerCase().includes(al[i])) return xlHeaders[j]; return ''; }
+    var mp={xmCo:g2(['회사','기업','업체','상호','company','name']),xmUrl:g2(['url','링크','link','주소','공고']),xmEmail:g2(['이메일','email','mail','연락']),xmInd:g2(['업종','산업','분야','industry'])};
+    ['xmCo','xmUrl','xmEmail','xmInd'].forEach(function(id){ var sel=G(id); sel.innerHTML=none+opts; if(mp[id]) sel.value=mp[id]; });
+    G('xlMapGrid').style.display='grid';
+    G('xlOk').disabled=false;
+  }
+  files.forEach(function(file){
+    var ext=file.name.split('.').pop().toLowerCase();
+    var rd=new FileReader();
+    rd.onload=function(ev){
+      try{
+        var wb=ext==='csv'?XLSX.read(ev.target.result,{type:'string'}):XLSX.read(ev.target.result,{type:'array'});
+        var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{raw:false,defval:''});
+        if(rows.length) allRows.push({name:file.name,rows:rows,headers:Object.keys(rows[0])});
+      }catch(e){ errs.push(file.name); }
+      if(++done===total) finish();
+    };
+    rd.onerror=function(){ errs.push(file.name); if(++done===total) finish(); };
+    ext==='csv'?rd.readAsText(file,'UTF-8'):rd.readAsArrayBuffer(file);
+  });
+}
+
+function xlImport(){
+  var colCo=G('xmCo').value, colUrl=G('xmUrl').value, colEmail=G('xmEmail').value, colInd=G('xmInd').value;
+  if(!colCo&&!colUrl){ toast('회사명 또는 URL 컬럼을 선택해주세요'); return; }
+  var added=0, skipped=0;
+  var existUrls={};
+  DB.forEach(function(d){ existUrls[d.url]=true; });
+
+  xlRows.forEach(function(row,i){
+    var rawCo   =colCo   ?String(row[colCo]   ||'').trim():'';
+    var rawUrl  =colUrl  ?String(row[colUrl]  ||'').trim():'';
+    var rawEmail=colEmail?String(row[colEmail]||'').trim().toLowerCase():'';
+    var rawInd  =colInd  ?String(row[colInd]  ||'').trim():'';
+    var url=rawUrl; if(url&&!url.startsWith('http')) url='https://'+url;
+    if(!url&&rawCo) url='company://'+rawCo.replace(/\s/g,'_')+'_'+Date.now()+'_'+i;
+    if(!url){ skipped++; return; }
+    if(existUrls[url]){ skipped++; return; }
+    existUrls[url]=true;
+    // 업종 자동 분류
+    var indId='';
+    if(rawInd){
+      var t=rawInd.toLowerCase();
+      var keys=Object.keys(IND_KW);
+      for(var ki=0;ki<keys.length;ki++){
+        if(IND_KW[keys[ki]].some(function(kw){return t.includes(kw);})){indId=keys[ki];break;}
+      }
+      if(!indId) indId='etc';
+    }
+    DB.push(makeEntry({url:url,company:rawCo,email:rawEmail,ind:indId}));
+    added++;
+  });
+
+  saveDB(); render(); xlClose();
+  toast('✅ '+added+'개 추가 완료'+(skipped?' (중복 '+skipped+'개 제외)':''));
+}
+</script>
+</body>
+</html>
