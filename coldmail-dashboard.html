@@ -399,8 +399,13 @@ var xlRows=[], xlHeaders=[];
 // ─────────────────────────────────────
 (function init(){
   loadDB();
+  // 기존 데이터 중 company:// 가상 URL → 빈 문자열로 정리
+  var dirty=false;
+  DB.forEach(function(d){
+    if(d.url&&d.url.startsWith('company://')){ d.url=''; dirty=true; }
+  });
+  if(dirty) saveDB();
   render();
-  // 엔터키
   G('urlInp').addEventListener('keydown', function(e){ if(e.key==='Enter') addLink(); });
   G('urlGoBtn').addEventListener('click', addLink);
 })();
@@ -485,14 +490,15 @@ function renderCards(){
       +(indObj?'<span class="badge" style="background:#f8f8ff;color:#6b7280;font-weight:500">'+indObj.label+'</span>':'')
       +stBadge
       +'</div>'
-      +'<div class="c-name">'+esc(d.company||d.url.replace(/https?:\/\//,'').slice(0,35))+'</div>'
+      +'<div class="c-name">'+esc(d.company||(d.url&&!d.url.startsWith('company://')?d.url.replace(/https?:\/\//,'').slice(0,35):'(회사명 없음)'))+'</div>'
       +'<div class="c-sub">'
       +(d.email?'<span>📧'+esc(d.email.slice(0,28))+'</span>':'')
       +(d.memo?'<span>📝'+esc(d.memo.slice(0,20))+'…</span>':'')
       +'<span style="color:#c0c0d0">'+d.createdAt+'</span>'
       +'</div>'
       +'<div class="c-btns">'
-      +(d.url?'<button class="sb sb-open" onclick="event.stopPropagation();window.open(\''+esc(d.url)+'\',\'_blank\')">🌐 원본보기</button>':'')
+      // URL이 실제 http 링크일 때만 원본보기 표시
+      +(d.url&&d.url.startsWith('http')?'<button class="sb sb-open" onclick="event.stopPropagation();window.open(\''+esc(d.url)+'\',\'_blank\')">🌐 원본보기</button>':'')
       +(!d.sentAt?'<button class="sb" onclick="event.stopPropagation();markDone('+d.id+')">✅발송완료</button>':'')
       +'<button class="sb sb-del" onclick="event.stopPropagation();delItem('+d.id+')">삭제</button>'
       +'</div>'
@@ -541,33 +547,21 @@ function showPanel(d){
   rp.innerHTML=
     // 헤드
     '<div class="p-head">'
-    +'<div>'
+    +'<div style="flex:1;min-width:0">'
     +'<div class="p-name">'+esc(d.company||'(회사명 없음)')+'</div>'
     +'<div class="p-meta">'
     +(d.email?'<span>📧 '+esc(d.email)+'</span>':'<span style="color:#fca5a5">이메일 없음</span>')
-    +'<span>'+d.createdAt+'</span>'
+    +(d.url&&d.url.startsWith('http')?'<span style="color:#3b82f6;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px">🔗 '+esc(d.url.replace(/https?:\/\//,'').slice(0,40))+'</span>':'')
+    +'<span style="color:#c0c0d0">'+d.createdAt+'</span>'
     +'</div>'
     +'</div>'
-    +'</div>'
-
-    // ── 원본 링크 확인 (가장 눈에 잘 띄는 위치) ──
-    +'<div class="fsec" style="background:linear-gradient(135deg,#eff6ff,#f0f9ff);border:2px solid #bfdbfe;border-radius:11px;padding:14px 16px">'
-    +'<div class="flbl" style="color:#2563eb;margin-bottom:8px">🌐 공고 원문 확인 <span style="background:#2563eb">STEP 1</span></div>'
-    +'<div style="font-size:11px;color:#3b82f6;margin-bottom:10px">원문을 직접 확인한 후 아래 유형과 업종을 선택하세요</div>'
-    // URL 입력/표시
-    +'<div style="display:flex;gap:7px;align-items:center">'
-    +'<input style="flex:1;padding:8px 11px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:12px;color:#1a1a2e;outline:none;background:#fff;font-family:inherit" '
-    +'id="fUrl" value="'+esc(d.url&&!d.url.startsWith('company://')?d.url:'')+'" placeholder="https://... 공고 링크 입력" '
-    +'oninput="upField('+d.id+',\'url\',this.value)">'
-    +(d.url&&!d.url.startsWith('company://')
+    // 원본 보기 버튼 — URL 있을 때만
+    +(d.url&&d.url.startsWith('http')
       ?'<a href="'+esc(d.url)+'" target="_blank" rel="noopener" '
-        +'style="display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#2563eb;color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0">'
+        +'style="display:inline-flex;align-items:center;gap:5px;padding:8px 16px;background:#2563eb;color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(37,99,235,.25)">'
         +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
         +'🌐 원본 보기</a>'
-      :'<button onclick="openUrl('+d.id+')" '
-        +'style="padding:8px 14px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">'
-        +'🌐 열기</button>')
-    +'</div>'
+      :'')
     +'</div>'
 
     // 회사명
