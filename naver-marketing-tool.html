@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AICUT 네이버 마케팅 툴</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #f0f2f7;
+    --white: #ffffff;
+    --header-h: 68px;
+    --footer-h: 72px;
+    --accent: #6c63ff;
+    --accent-light: #ece9ff;
+    --accent-dark: #5a52e0;
+    --blog: #3b82f6;
+    --cafe: #10b981;
+    --kin: #f59e0b;
+    --success: #10b981;
+    --warn: #f97316;
+    --text: #1a1a2e;
+    --text-2: #64748b;
+    --text-3: #94a3b8;
+    --border: #e2e8f0;
+    --shadow: 0 2px 12px rgba(108,99,255,0.08);
+    --shadow-md: 0 4px 24px rgba(108,99,255,0.13);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--header-h);
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 24px;
+    gap: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    flex-shrink: 0; text-decoration: none;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, #6c63ff, #a78bfa);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 15px; letter-spacing: -1px;
+  }
+  .logo-text { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; }
+  .logo-text span { color: var(--accent); }
+
+  .search-wrap {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    max-width: 560px; margin: 0 auto;
+  }
+  .search-box {
+    flex: 1; position: relative;
+  }
+  .search-input {
+    width: 100%; height: 40px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 0 44px 0 18px;
+    font-size: 14px; font-family: inherit;
+    outline: none; transition: border .2s;
+    color: var(--text);
+  }
+  .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .search-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 15px; pointer-events: none; }
+  .recent-tags { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow: hidden; }
+  .recent-tag {
+    font-size: 12px; color: var(--text-2); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 12px; padding: 3px 10px;
+    cursor: pointer; white-space: nowrap; transition: all .15s;
+  }
+  .recent-tag:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+
+  .btn-search {
+    height: 40px; padding: 0 22px; border-radius: 20px; border: none;
+    background: var(--accent); color: #fff; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: background .2s, transform .1s;
+    white-space: nowrap;
+  }
+  .btn-search:hover { background: var(--accent-dark); }
+  .btn-search:active { transform: scale(.97); }
+
+  .header-stats {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 13px; color: var(--text-2); flex-shrink: 0;
+  }
+  .stat-item { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .stat-item strong { color: var(--text); font-weight: 700; }
+
+  /* ─── MAIN LAYOUT ─── */
+  main {
+    margin-top: var(--header-h);
+    margin-bottom: var(--footer-h);
+    display: flex;
+    height: calc(100vh - var(--header-h) - var(--footer-h));
+    overflow: hidden;
+  }
+
+  /* ─── LEFT PANEL ─── */
+  .left-panel {
+    width: 45%;
+    display: flex; flex-direction: column;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .panel-toolbar {
+    background: var(--white);
+    padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    gap: 10px; flex-shrink: 0;
+  }
+
+  .tabs { display: flex; gap: 4px; }
+  .tab {
+    padding: 6px 14px; border-radius: var(--radius-sm); border: none;
+    background: transparent; font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: inherit; color: var(--text-2); transition: all .15s;
+  }
+  .tab.active { background: var(--accent-light); color: var(--accent); font-weight: 700; }
+  .tab:hover:not(.active) { background: var(--bg); }
+
+  .sort-select {
+    font-size: 12px; border: 1px solid var(--border); border-radius: 6px;
+    padding: 4px 10px; background: var(--white); color: var(--text-2);
+    font-family: inherit; cursor: pointer; outline: none;
+  }
+
+  /* URL 수동 추가 */
+  .manual-add {
+    background: var(--white);
+    padding: 8px 16px;
+    display: flex; gap: 8px; align-items: center;
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .manual-input {
+    flex: 1; height: 32px; border: 1px solid var(--border); border-radius: 6px;
+    padding: 0 10px; font-size: 12px; font-family: inherit; outline: none;
+    transition: border .2s;
+  }
+  .manual-input:focus { border-color: var(--accent); }
+  .btn-manual-add {
+    height: 32px; padding: 0 14px; border-radius: 6px; border: none;
+    background: var(--accent); color: #fff; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: background .2s;
+    white-space: nowrap;
+  }
+  .btn-manual-add:hover { background: var(--accent-dark); }
+
+  .results-scroll {
+    flex: 1; overflow-y: auto; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .results-scroll::-webkit-scrollbar { width: 5px; }
+  .results-scroll::-webkit-scrollbar-track { background: transparent; }
+  .results-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
+
+  /* ─── IFRAME 패널 ─── */
+  .iframe-panel {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+  .iframe-panel.active { display: flex; }
+  .iframe-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--white); flex-shrink: 0; }
+  .iframe-tab {
+    flex: 1; padding: 10px; border: none; background: transparent;
+    font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;
+    color: var(--text-2); transition: all .15s; border-bottom: 2px solid transparent;
+  }
+  .iframe-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--accent-light); }
+  .iframe-frame {
+    flex: 1; border: none; width: 100%;
+  }
+
+  /* ─── RESULT CARD ─── */
+  .result-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1.5px solid transparent;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+  }
+  .result-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .result-card.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light), var(--shadow-md); }
+  .result-card.done { border-color: #86efac; }
+  .done-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: #dcfce7; color: #16a34a; font-size: 11px; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px; display: flex; align-items: center; gap: 3px;
+  }
+
+  .card-meta {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 7px;
+  }
+  .platform-badge {
+    font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; color: #fff;
+  }
+  .platform-badge.blog { background: var(--blog); }
+  .platform-badge.cafe { background: var(--cafe); }
+  .platform-badge.kin { background: var(--kin); }
+  .card-date { font-size: 11px; color: var(--text-3); }
+
+  .card-title {
+    font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 5px;
+    line-height: 1.4; word-break: break-all;
+  }
+  .card-preview {
+    font-size: 12px; color: var(--text-2); line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    margin-bottom: 7px;
+  }
+  .card-source { font-size: 11px; color: var(--text-3); margin-bottom: 10px; }
+
+  .card-actions { display: flex; gap: 6px; }
+  .btn-card {
+    padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border);
+    font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit;
+    background: var(--white); color: var(--text-2); transition: all .15s;
+  }
+  .btn-card:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-card.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-card.primary:hover { background: var(--accent-dark); }
+
+  /* ─── RIGHT PANEL ─── */
+  .right-panel {
+    width: 55%;
+    display: flex; flex-direction: column;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  .panel-section {
+    background: var(--white);
+    border-radius: var(--radius);
+    margin: 14px 16px 0;
+    padding: 16px;
+    box-shadow: var(--shadow);
+    flex-shrink: 0;
+  }
+
+  .selected-post-header { margin: 14px 16px 0; flex-shrink: 0; }
+
+  .post-info-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+  .post-info-label { font-size: 11px; color: var(--text-3); font-weight: 600; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 6px; }
+  .post-info-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 5px; word-break: break-all; line-height: 1.4; }
+  .post-info-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .post-info-source { font-size: 12px; color: var(--text-2); }
+  .post-info-link { font-size: 12px; color: var(--accent); text-decoration: none; word-break: break-all; }
+  .post-info-link:hover { text-decoration: underline; }
+
+  .btn-open {
+    margin-top: 10px; padding: 7px 16px; border-radius: 8px; border: none;
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: #fff; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: opacity .2s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-open:hover { opacity: .88; }
+
+  /* 댓글 작성 영역 */
+  .comment-section {
+    flex: 1; overflow-y: auto; padding: 12px 16px 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .comment-section::-webkit-scrollbar { width: 5px; }
+  .comment-section::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
+
+  .section-card {
+    background: var(--white); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow);
+  }
+
+  .section-label { font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .section-label::before { content: ''; display: block; width: 3px; height: 14px; background: var(--accent); border-radius: 2px; }
+
+  .template-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .template-btn {
+    padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+    font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+    background: var(--white); color: var(--text-2); transition: all .15s;
+  }
+  .template-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .template-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .comment-textarea {
+    width: 100%; height: 160px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    padding: 12px; font-size: 13px; font-family: inherit; line-height: 1.7;
+    resize: vertical; outline: none; transition: border .2s; color: var(--text);
+    background: #fafbff;
+  }
+  .comment-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+
+  .char-count { text-align: right; font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+  .action-btns { display: flex; gap: 10px; margin-top: 4px; }
+  .btn-copy {
+    flex: 1; height: 44px; border-radius: 10px; border: none;
+    background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: inherit; transition: all .2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-copy:hover { background: var(--accent-dark); transform: translateY(-1px); }
+  .btn-copy:active { transform: scale(.97); }
+  .btn-done {
+    flex: 1; height: 44px; border-radius: 10px; border: none;
+    background: var(--success); color: #fff; font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: inherit; transition: all .2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-done:hover { background: #059669; transform: translateY(-1px); }
+  .btn-done:active { transform: scale(.97); }
+
+  /* 빈 상태 */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; gap: 12px; color: var(--text-3); padding: 40px;
+  }
+  .empty-icon { font-size: 48px; opacity: .5; }
+  .empty-title { font-size: 15px; font-weight: 600; color: var(--text-2); }
+  .empty-desc { font-size: 13px; text-align: center; line-height: 1.6; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    height: var(--footer-h);
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 28px;
+    gap: 24px;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+  }
+
+  .footer-stats { display: flex; gap: 20px; align-items: center; font-size: 13px; flex-shrink: 0; }
+  .footer-stat { display: flex; align-items: center; gap: 6px; }
+  .footer-stat .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .footer-stat .dot.blog { background: var(--blog); }
+  .footer-stat .dot.cafe { background: var(--cafe); }
+  .footer-stat .dot.kin { background: var(--kin); }
+  .footer-stat .count { font-weight: 700; color: var(--text); }
+  .footer-total { font-size: 14px; font-weight: 700; color: var(--text); }
+  .footer-total span { color: var(--accent); }
+
+  .progress-wrap { flex: 1; }
+  .progress-label { font-size: 11px; color: var(--text-3); margin-bottom: 5px; display: flex; justify-content: space-between; }
+  .progress-label .warn { color: var(--warn); font-weight: 700; }
+  .progress-bar-bg { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), #a78bfa); border-radius: 4px; transition: width .4s ease; }
+  .progress-bar.over { background: linear-gradient(90deg, var(--warn), #fbbf24); }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #1e293b; color: #fff; padding: 10px 22px; border-radius: 20px;
+    font-size: 13px; font-weight: 600; z-index: 9999;
+    opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ─── SEARCH MODE TOGGLE ─── */
+  .view-toggle { display: flex; gap: 4px; margin-left: auto; }
+  .view-btn {
+    padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--white); font-size: 12px; cursor: pointer; font-family: inherit;
+    color: var(--text-2); transition: all .15s;
+  }
+  .view-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+
+  /* ─── NAVER OPEN BUTTONS ─── */
+  .naver-open-panel {
+    display: none; flex-direction: column; flex: 1; overflow-y: auto;
+    padding: 20px 16px; gap: 12px; background: var(--bg);
+  }
+  .naver-open-panel.active { display: flex; }
+  .naver-open-title {
+    font-size: 13px; font-weight: 700; color: var(--text-2); margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .naver-open-desc {
+    font-size: 12px; color: var(--text-3); line-height: 1.6; margin-bottom: 8px;
+  }
+  .naver-open-btn {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 20px; border-radius: var(--radius); border: 1.5px solid var(--border);
+    background: var(--white); cursor: pointer; font-family: inherit;
+    box-shadow: var(--shadow); transition: all .2s; text-decoration: none;
+    color: var(--text);
+  }
+  .naver-open-btn:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .naver-open-btn:active { transform: scale(.98); }
+  .naver-open-btn .btn-icon {
+    width: 44px; height: 44px; border-radius: 12px; display: flex;
+    align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
+  }
+  .naver-open-btn .btn-icon.blog { background: #dbeafe; }
+  .naver-open-btn .btn-icon.cafe { background: #d1fae5; }
+  .naver-open-btn .btn-icon.kin  { background: #fef3c7; }
+  .naver-open-btn .btn-text { flex: 1; text-align: left; }
+  .naver-open-btn .btn-text strong { display: block; font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  .naver-open-btn .btn-text span { font-size: 12px; color: var(--text-3); }
+  .naver-open-btn .btn-arrow { font-size: 18px; color: var(--text-3); }
+  .naver-open-btn:hover .btn-arrow { color: var(--accent); }
+  .naver-open-keyword {
+    display: inline-block; background: var(--accent-light); color: var(--accent);
+    font-weight: 700; padding: 2px 8px; border-radius: 6px; font-size: 13px;
+  }
+  .naver-open-hint {
+    background: #fff8e1; border: 1px solid #fde68a; border-radius: var(--radius-sm);
+    padding: 12px 14px; font-size: 12px; color: #92400e; line-height: 1.6;
+    display: flex; gap: 8px; align-items: flex-start;
+  }
+  .naver-open-hint .hint-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  /* CARD VIEW */
+  .card-list-panel {
+    flex: 1; overflow: hidden; display: flex; flex-direction: column;
+  }
+  .card-list-panel.hidden { display: none; }
+
+  /* scroll style for right panel */
+  .right-scroll { overflow-y: auto; flex: 1; }
+  .right-scroll::-webkit-scrollbar { width: 5px; }
+  .right-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
+
+  /* skeleton */
+  .skeleton { animation: shimmer 1.5s infinite; }
+  @keyframes shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+  .skeleton-card {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) no-repeat;
+    background-size: 800px 100%;
+    height: 120px; border-radius: var(--radius);
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── HEADER ─── -->
+<header>
+  <a class="logo" href="#">
+    <div class="logo-icon">Ai</div>
+    <span class="logo-text"><span>AICUT</span> 네이버 마케팅 툴</span>
+  </a>
+
+  <div class="search-wrap">
+    <div class="search-box" style="flex:1; position:relative;">
+      <input class="search-input" id="searchInput" type="text" placeholder="키워드를 입력하세요 (예: 영상편집 외주)" autocomplete="off">
+      <span class="search-icon">🔍</span>
+    </div>
+    <button class="btn-search" id="btnSearch">검색</button>
+  </div>
+
+  <div class="recent-tags" id="recentTags"></div>
+
+  <div class="header-stats">
+    <div class="stat-item">📋 수집 <strong id="statCollect">0</strong>건</div>
+    <div class="stat-item">✅ 댓글완료 <strong id="statDone">0</strong>건</div>
+    <div class="stat-item">📅 오늘 <strong id="statToday">0</strong>건</div>
+  </div>
+</header>
+
+<!-- ─── MAIN ─── -->
+<main>
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="panel-toolbar">
+      <div class="tabs" id="platformTabs">
+        <button class="tab active" data-platform="all">전체</button>
+        <button class="tab" data-platform="blog">📝 블로그</button>
+        <button class="tab" data-platform="cafe">🏠 카페</button>
+        <button class="tab" data-platform="kin">❓ 지식인</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <select class="sort-select" id="sortSelect">
+          <option value="recent">최신순</option>
+          <option value="relevant">관련도순</option>
+        </select>
+        <div class="view-toggle">
+          <button class="view-btn active" id="viewCard" title="카드 보기">🃏 카드</button>
+          <button class="view-btn" id="viewNaver" title="네이버 검색 새 탭으로 열기">🌐 검색 열기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 수동 URL 추가 -->
+    <div class="manual-add">
+      <span style="font-size:12px;color:var(--text-2);white-space:nowrap;flex-shrink:0;">🔗 URL 직접 추가:</span>
+      <input class="manual-input" id="manualUrl" type="text" placeholder="네이버 게시글 URL 붙여넣기">
+      <select class="sort-select" id="manualPlatform" style="flex-shrink:0;">
+        <option value="blog">블로그</option>
+        <option value="cafe">카페</option>
+        <option value="kin">지식인</option>
+      </select>
+      <button class="btn-manual-add" id="btnManualAdd">+ 추가</button>
+    </div>
+
+    <!-- 카드 리스트 -->
+    <div class="card-list-panel" id="cardListPanel">
+      <div class="results-scroll" id="resultsList">
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-title">키워드를 검색하세요</div>
+          <div class="empty-desc">상단 검색창에 키워드를 입력하면<br>블로그·카페·지식인 결과를 수집합니다</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 네이버 검색 새 탭 열기 패널 -->
+    <div class="naver-open-panel" id="naverPanel">
+      <div class="naver-open-title">🌐 네이버에서 직접 검색하기</div>
+      <div class="naver-open-desc">
+        아래 버튼을 클릭하면 <span class="naver-open-keyword" id="naverKwDisplay">키워드</span> 검색 결과가 새 탭으로 열립니다.<br>
+        원하는 게시글을 발견하면 URL을 복사해 왼쪽 <strong>URL 직접 추가</strong> 란에 붙여넣으세요.
+      </div>
+
+      <a class="naver-open-btn" id="naverBlogBtn" href="#" target="_blank" rel="noopener">
+        <div class="btn-icon blog">📝</div>
+        <div class="btn-text">
+          <strong>블로그 검색 열기</strong>
+          <span>네이버 블로그 최신순 검색 결과</span>
+        </div>
+        <span class="btn-arrow">↗</span>
+      </a>
+
+      <a class="naver-open-btn" id="naverCafeBtn" href="#" target="_blank" rel="noopener">
+        <div class="btn-icon cafe">🏠</div>
+        <div class="btn-text">
+          <strong>카페 검색 열기</strong>
+          <span>네이버 카페 최신순 검색 결과</span>
+        </div>
+        <span class="btn-arrow">↗</span>
+      </a>
+
+      <a class="naver-open-btn" id="naverKinBtn" href="#" target="_blank" rel="noopener">
+        <div class="btn-icon kin">❓</div>
+        <div class="btn-text">
+          <strong>지식iN 검색 열기</strong>
+          <span>네이버 지식iN 최신순 검색 결과</span>
+        </div>
+        <span class="btn-arrow">↗</span>
+      </a>
+
+      <div class="naver-open-hint">
+        <span class="hint-icon">💡</span>
+        <span>게시글 URL을 복사한 뒤 왼쪽 상단의 <strong>URL 직접 추가</strong> 입력란에 붙여넣고 [+ 추가] 버튼을 누르면<br>카드로 등록되어 댓글 작성이 가능합니다.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <!-- 선택된 게시글 정보 -->
+    <div id="postInfoArea" style="padding:14px 16px 0; flex-shrink:0;">
+      <!-- JS로 렌더 -->
+    </div>
+
+    <!-- 댓글 작성 -->
+    <div class="right-scroll">
+      <div class="comment-section" id="commentSection">
+        <div class="empty-state" id="rightEmpty">
+          <div class="empty-icon">💬</div>
+          <div class="empty-title">게시글을 선택하세요</div>
+          <div class="empty-desc">왼쪽 목록에서 [💬 댓글 작성] 버튼을<br>클릭하면 댓글 패널이 열립니다</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="footer-stats">
+    <div class="footer-stat"><span class="dot blog"></span> 블로그 <span class="count" id="footBlog">0</span>건</div>
+    <div class="footer-stat"><span class="dot cafe"></span> 카페 <span class="count" id="footCafe">0</span>건</div>
+    <div class="footer-stat"><span class="dot kin"></span> 지식인 <span class="count" id="footKin">0</span>건</div>
+    <div class="footer-total">총 <span id="footTotal">0</span>건</div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span id="progressLabel">오늘 댓글 현황</span>
+      <span id="progressCount">0 / 20</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+  </div>
+</footer>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+const STORAGE = {
+  history: 'aicut_search_history',
+  done: 'aicut_done_list',
+  manualUrls: 'aicut_manual_urls',
+  todayDate: 'aicut_today_date',
+  todayCount: 'aicut_today_count',
+};
+
+const TEMPLATES = {
+  info: `안녕하세요!
+영상편집 외주 관련해서 도움드릴게요.
+에이컷(aicut.co.kr)은 소스만 넘기면
+전담팀이 48시간 안에 납품해드립니다.
+월정액으로 꾸준히 이용하시는 분들이 많고
+처음 상담은 무료로 진행하고 있어요 😊`,
+  sympathy: `저도 같은 고민 했었는데요!
+에이컷 써보니까 48시간 납품에
+퀄리티도 좋더라고요.
+aicut.co.kr 한번 참고해보세요~`,
+  short: `영상편집 외주는 에이컷 추천드려요!
+소스만 주시면 48시간 납품 → aicut.co.kr`,
+};
+
+const PLATFORM_TEMPLATE = { blog: 'short', cafe: 'sympathy', kin: 'info' };
+
+// ─── 네이버 API 설정 ──────────────────────────────────────
+const NAVER_CLIENT_ID     = 'NN7ZK0aYbcjLf0yKhERy';
+const NAVER_CLIENT_SECRET = 'KslOQu7EI6';
+// CORS 프록시 목록 (순서대로 시도)
+const CORS_PROXIES = [
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+  (url) => `https://proxy.cors.sh/${url}`,
+  (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
+];
+
+// 날짜 파싱 (yyyyMMdd → 표시용)
+function formatNaverDate(raw) {
+  if (!raw) return '';
+  const s = String(raw);
+  if (s.length === 8) return `${s.slice(0,4)}.${s.slice(4,6)}.${s.slice(6,8)}`;
+  try { const d = new Date(s); return `${d.getMonth()+1}/${d.getDate()}`; } catch(e) { return s; }
+}
+
+// 네이버 API 단일 호출 — 프록시 순차 시도
+async function naverSearch(type, query, display = 10) {
+  const apiUrl = `https://openapi.naver.com/v1/search/${type}.json?query=${encodeURIComponent(query)}&display=${display}&sort=date`;
+
+  let lastErr;
+  for (const makeProxy of CORS_PROXIES) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    try {
+      const proxyUrl = makeProxy(apiUrl);
+      const res = await fetch(proxyUrl, {
+        headers: {
+          'X-Naver-Client-Id':     NAVER_CLIENT_ID,
+          'X-Naver-Client-Secret': NAVER_CLIENT_SECRET,
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data && data.items !== undefined) return data;
+      throw new Error('응답 형식 오류');
+    } catch (e) {
+      clearTimeout(timer);
+      lastErr = e;
+      console.warn(`프록시 실패 (${type}):`, e.message, '→ 다음 프록시 시도');
+    }
+  }
+  throw new Error(`모든 프록시 실패 (${type}): ${lastErr?.message}`);
+}
+
+// HTML 태그 제거
+function stripTags(html) {
+  return (html || '').replace(/<[^>]+>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#039;/g,"'").trim();
+}
+
+// ─── APP STATE ────────────────────────────────────────────
+let state = {
+  keyword: '',
+  results: [],
+  filtered: [],
+  activePlatform: 'all',
+  activeSort: 'recent',
+  selectedCard: null,
+  activeTemplate: 'info',
+  viewMode: 'card',
+  done: {},
+  todayCount: 0,
+  loading: false,
+};
+
+function loadStorage() {
+  const today = new Date().toDateString();
+  const storedDate = localStorage.getItem(STORAGE.todayDate);
+  if (storedDate !== today) {
+    localStorage.setItem(STORAGE.todayDate, today);
+    localStorage.setItem(STORAGE.todayCount, '0');
+  }
+  state.todayCount = parseInt(localStorage.getItem(STORAGE.todayCount) || '0');
+  try { state.done = JSON.parse(localStorage.getItem(STORAGE.done) || '{}'); } catch(e) { state.done = {}; }
+}
+
+function saveStorage() {
+  localStorage.setItem(STORAGE.done, JSON.stringify(state.done));
+  localStorage.setItem(STORAGE.todayCount, String(state.todayCount));
+}
+
+// ─── SEARCH ──────────────────────────────────────────────
+async function doSearch() {
+  const kw = document.getElementById('searchInput').value.trim();
+  if (!kw) { showToast('키워드를 입력하세요'); return; }
+  if (state.loading) return;
+
+  state.keyword = kw;
+  state.loading = true;
+
+  // 검색 기록 저장
+  let history = JSON.parse(localStorage.getItem(STORAGE.history) || '[]');
+  history = [kw, ...history.filter(h => h !== kw)].slice(0, 5);
+  localStorage.setItem(STORAGE.history, JSON.stringify(history));
+  renderRecentTags();
+
+  // 로딩 표시
+  const btn = document.getElementById('btnSearch');
+  btn.textContent = '검색 중...'; btn.disabled = true;
+  showLoading();
+
+  try {
+    const [blogRes, cafeRes, kinRes] = await Promise.allSettled([
+      naverSearch('blog',        kw, 10),
+      naverSearch('cafearticle', kw, 10),
+      naverSearch('kin',         kw, 10),
+    ]);
+
+    const ts = Date.now();
+    let results = [];
+
+    // 블로그
+    if (blogRes.status === 'fulfilled') {
+      (blogRes.value.items || []).forEach((item, i) => {
+        results.push({
+          id: `blog_${ts}_${i}`,
+          platform: 'blog',
+          keyword: kw,
+          title:   stripTags(item.title),
+          preview: stripTags(item.description),
+          source:  item.bloggername || stripTags(item.bloggerlink) || 'blog.naver.com',
+          date:    formatNaverDate(item.postdate),
+          url:     item.link,
+        });
+      });
+    } else {
+      console.warn('블로그 API 실패:', blogRes.reason);
+    }
+
+    // 카페
+    if (cafeRes.status === 'fulfilled') {
+      (cafeRes.value.items || []).forEach((item, i) => {
+        results.push({
+          id: `cafe_${ts}_${i}`,
+          platform: 'cafe',
+          keyword: kw,
+          title:   stripTags(item.title),
+          preview: stripTags(item.description),
+          source:  item.cafename || 'cafe.naver.com',
+          date:    formatNaverDate(item.postdate),
+          url:     item.link,
+        });
+      });
+    } else {
+      console.warn('카페 API 실패:', cafeRes.reason);
+    }
+
+    // 지식iN
+    if (kinRes.status === 'fulfilled') {
+      (kinRes.value.items || []).forEach((item, i) => {
+        results.push({
+          id: `kin_${ts}_${i}`,
+          platform: 'kin',
+          keyword: kw,
+          title:   stripTags(item.title),
+          preview: stripTags(item.description),
+          source:  '지식iN',
+          date:    '',
+          url:     item.link,
+        });
+      });
+    } else {
+      console.warn('지식iN API 실패:', kinRes.reason);
+    }
+
+    if (results.length === 0) {
+      showToast('⚠️ 검색 결과가 없습니다. 키워드를 바꿔보세요');
+      document.getElementById('resultsList').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">⚠️</div>
+          <div class="empty-title">검색 결과 없음</div>
+          <div class="empty-desc">다른 키워드로 검색하거나<br>URL 직접 추가를 이용해주세요</div>
+        </div>`;
+    } else {
+      showToast(`"${kw}" 검색 완료 — 총 ${results.length}건 수집`);
+    }
+
+    // 수동 추가 URL 포함
+    const manual = JSON.parse(localStorage.getItem(STORAGE.manualUrls) || '[]');
+    manual.forEach(m => {
+      if (!results.find(r => r.id === m.id)) results.push(m);
+    });
+
+    state.results = results;
+
+  } catch (err) {
+    console.error(err);
+    showToast('❌ 네이버 API 연결 실패 — 잠시 후 다시 시도해주세요');
+    document.getElementById('resultsList').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">❌</div>
+        <div class="empty-title">API 연결 실패</div>
+        <div class="empty-desc">네트워크 상태를 확인하거나<br>잠시 후 다시 검색해주세요.<br><br>또는 아래 <strong>URL 직접 추가</strong>를 이용하세요.</div>
+      </div>`;
+    state.results = [];
+  } finally {
+    state.loading = false;
+    const btn2 = document.getElementById('btnSearch');
+    btn2.textContent = '검색'; btn2.disabled = false;
+    applyFilter();
+    updateNaverLinks();
+  }
+}
+
+function showLoading() {
+  const el = document.getElementById('resultsList');
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${[1,2,3,4,5].map(() => `
+        <div style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 12px rgba(108,99,255,0.08);">
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <div style="width:50px;height:18px;border-radius:9px;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;"></div>
+            <div style="width:70px;height:18px;border-radius:9px;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;"></div>
+          </div>
+          <div style="width:85%;height:16px;border-radius:6px;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;margin-bottom:8px;"></div>
+          <div style="width:100%;height:12px;border-radius:6px;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;margin-bottom:5px;"></div>
+          <div style="width:70%;height:12px;border-radius:6px;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:400px 100%;animation:shimmer 1.5s infinite;"></div>
+        </div>`).join('')}
+    </div>
+    <div style="text-align:center;padding:16px;font-size:13px;color:#94a3b8;">⏳ 네이버 API에서 실시간 검색 중...</div>`;
+}
+
+function applyFilter() {
+  let arr = [...state.results];
+  if (state.activePlatform !== 'all') arr = arr.filter(r => r.platform === state.activePlatform);
+  if (state.activeSort === 'relevant') arr.sort((a, b) => a.title.localeCompare(b.title));
+  state.filtered = arr;
+  renderResults();
+  updateStats();
+}
+
+// ─── RENDER RESULTS ──────────────────────────────────────
+function renderResults() {
+  const el = document.getElementById('resultsList');
+  if (!state.filtered.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">결과 없음</div><div class="empty-desc">다른 키워드로 검색하거나<br>직접 URL을 추가해보세요</div></div>`;
+    return;
+  }
+  el.innerHTML = state.filtered.map(item => renderCard(item)).join('');
+  // 이벤트 바인딩
+  el.querySelectorAll('.btn-open-url').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); window.open(btn.dataset.url, '_blank'); });
+  });
+  el.querySelectorAll('.btn-write').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); selectCard(btn.dataset.id); });
+  });
+  el.querySelectorAll('.result-card').forEach(card => {
+    card.addEventListener('click', () => selectCard(card.dataset.id));
+  });
+}
+
+function renderCard(item) {
+  const done = !!state.done[item.id];
+  const selected = state.selectedCard && state.selectedCard.id === item.id;
+  const platLabel = { blog: '📝 블로그', cafe: '🏠 카페', kin: '❓ 지식인' }[item.platform];
+  return `
+    <div class="result-card${selected ? ' selected' : ''}${done ? ' done' : ''}" data-id="${item.id}">
+      ${done ? `<div class="done-badge">✅ 완료</div>` : ''}
+      <div class="card-meta">
+        <span class="platform-badge ${item.platform}">${platLabel}</span>
+        <span class="card-date">${item.date || ''}</span>
+      </div>
+      <div class="card-title">${item.title}</div>
+      <div class="card-preview">${item.preview}</div>
+      <div class="card-source">${item.source}</div>
+      <div class="card-actions">
+        <button class="btn-card btn-open-url" data-url="${item.url}">🔗 원문 열기</button>
+        <button class="btn-card primary btn-write" data-id="${item.id}">💬 댓글 작성</button>
+      </div>
+    </div>`;
+}
+
+// ─── SELECT CARD ─────────────────────────────────────────
+function selectCard(id) {
+  const item = state.results.find(r => r.id === id);
+  if (!item) return;
+  state.selectedCard = item;
+
+  // 자동 템플릿 선택
+  state.activeTemplate = PLATFORM_TEMPLATE[item.platform] || 'info';
+
+  renderResults();
+  renderRightPanel(item);
+}
+
+function renderRightPanel(item) {
+  const platLabel = { blog: '📝 블로그', cafe: '🏠 카페', kin: '❓ 지식인' }[item.platform];
+
+  // 게시글 정보
+  document.getElementById('postInfoArea').innerHTML = `
+    <div class="post-info-card">
+      <div class="post-info-label">선택된 게시글</div>
+      <div class="post-info-meta" style="margin-bottom:6px;">
+        <span class="platform-badge ${item.platform}" style="font-size:11px;">${platLabel}</span>
+      </div>
+      <div class="post-info-title">${item.title}</div>
+      <div class="post-info-meta">
+        <span class="post-info-source">${item.source}</span>
+        <a class="post-info-link" href="${item.url}" target="_blank">${item.url}</a>
+      </div>
+      <button class="btn-open" onclick="window.open('${item.url}','_blank')">🔗 네이버에서 열기</button>
+    </div>`;
+
+  // 댓글 섹션
+  const section = document.getElementById('commentSection');
+  section.innerHTML = `
+    <div class="section-card">
+      <div class="section-label">댓글 템플릿 선택</div>
+      <div class="template-btns">
+        <button class="template-btn${state.activeTemplate==='info'?' active':''}" data-tmpl="info">📌 정보형</button>
+        <button class="template-btn${state.activeTemplate==='sympathy'?' active':''}" data-tmpl="sympathy">💙 공감형</button>
+        <button class="template-btn${state.activeTemplate==='short'?' active':''}" data-tmpl="short">⚡ 짧은 추천형</button>
+      </div>
+      <textarea class="comment-textarea" id="commentText" maxlength="500">${TEMPLATES[state.activeTemplate]}</textarea>
+      <div class="char-count"><span id="charCount">${TEMPLATES[state.activeTemplate].length}</span> / 500자</div>
+      <div class="action-btns">
+        <button class="btn-copy" id="btnCopy">📋 댓글 복사</button>
+        <button class="btn-done" id="btnDoneCheck">✅ 댓글 완료 체크</button>
+      </div>
+    </div>`;
+
+  // 이벤트
+  section.querySelectorAll('.template-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.activeTemplate = btn.dataset.tmpl;
+      section.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('commentText').value = TEMPLATES[state.activeTemplate];
+      document.getElementById('charCount').textContent = TEMPLATES[state.activeTemplate].length;
+    });
+  });
+
+  document.getElementById('commentText').addEventListener('input', function() {
+    document.getElementById('charCount').textContent = this.value.length;
+  });
+
+  document.getElementById('btnCopy').addEventListener('click', copyComment);
+  document.getElementById('btnDoneCheck').addEventListener('click', () => markDone(item.id));
+}
+
+function copyComment() {
+  const text = document.getElementById('commentText')?.value;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('✅ 복사됨! 댓글창에 붙여넣기 하세요');
+    const btn = document.getElementById('btnCopy');
+    if (btn) { btn.textContent = '✓ 복사됨!'; setTimeout(() => { btn.innerHTML = '📋 댓글 복사'; }, 2000); }
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('✅ 복사됨!');
+  });
+}
+
+function markDone(id) {
+  state.done[id] = new Date().toISOString();
+  state.todayCount++;
+  saveStorage();
+  updateStats();
+  renderResults();
+  showToast('🎉 댓글 완료 체크!');
+}
+
+// ─── MANUAL URL ──────────────────────────────────────────
+function addManualUrl() {
+  const url = document.getElementById('manualUrl').value.trim();
+  const platform = document.getElementById('manualPlatform').value;
+  if (!url) { showToast('URL을 입력하세요'); return; }
+  if (!url.startsWith('http')) { showToast('올바른 URL을 입력하세요'); return; }
+
+  const id = 'manual_' + Date.now();
+  const item = {
+    id, platform, title: url.split('/').pop() || 'URL 추가 게시글',
+    preview: '직접 추가한 URL입니다. 원문 열기 버튼으로 확인하세요.',
+    source: new URL(url).hostname, date: '방금', url, keyword: state.keyword
+  };
+  state.results.unshift(item);
+
+  const manual = JSON.parse(localStorage.getItem(STORAGE.manualUrls) || '[]');
+  manual.unshift(item);
+  localStorage.setItem(STORAGE.manualUrls, JSON.stringify(manual.slice(0, 50)));
+
+  document.getElementById('manualUrl').value = '';
+  applyFilter();
+  showToast('URL 추가 완료');
+}
+
+// ─── NAVER OPEN LINKS ────────────────────────────────────
+function updateNaverLinks() {
+  const kw = encodeURIComponent(state.keyword || '영상편집 외주');
+  const display = state.keyword || '키워드';
+  const el = document.getElementById('naverKwDisplay');
+  if (el) el.textContent = display;
+
+  const blog = document.getElementById('naverBlogBtn');
+  const cafe = document.getElementById('naverCafeBtn');
+  const kin  = document.getElementById('naverKinBtn');
+  if (blog) blog.href = `https://search.naver.com/search.naver?where=blog&query=${kw}&sort=1`;
+  if (cafe) cafe.href = `https://search.naver.com/search.naver?where=cafeblog&query=${kw}&sort=1`;
+  if (kin)  kin.href  = `https://search.naver.com/search.naver?where=kin&query=${kw}&sort=1`;
+}
+
+// ─── STATS ───────────────────────────────────────────────
+function updateStats() {
+  const allDoneIds = Object.keys(state.done);
+  document.getElementById('statCollect').textContent = state.results.length;
+  document.getElementById('statDone').textContent = allDoneIds.filter(id => state.results.find(r => r.id === id)).length;
+  document.getElementById('statToday').textContent = state.todayCount;
+
+  const blogDone = allDoneIds.filter(id => { const r = state.results.find(r => r.id === id); return r && r.platform === 'blog'; }).length;
+  const cafeDone = allDoneIds.filter(id => { const r = state.results.find(r => r.id === id); return r && r.platform === 'cafe'; }).length;
+  const kinDone  = allDoneIds.filter(id => { const r = state.results.find(r => r.id === id); return r && r.platform === 'kin'; }).length;
+
+  document.getElementById('footBlog').textContent = blogDone;
+  document.getElementById('footCafe').textContent = cafeDone;
+  document.getElementById('footKin').textContent = kinDone;
+  document.getElementById('footTotal').textContent = blogDone + cafeDone + kinDone;
+
+  const pct = Math.min(100, (state.todayCount / 20) * 100);
+  const bar = document.getElementById('progressBar');
+  bar.style.width = pct + '%';
+  document.getElementById('progressCount').textContent = `${state.todayCount} / 20`;
+
+  if (state.todayCount >= 20) {
+    bar.classList.add('over');
+    document.getElementById('progressLabel').innerHTML = `⚠️ 오늘 권장 한도 초과 <span class="warn">주의!</span>`;
+  } else {
+    bar.classList.remove('over');
+    document.getElementById('progressLabel').textContent = '오늘 댓글 현황';
+  }
+}
+
+// ─── RECENT TAGS ─────────────────────────────────────────
+function renderRecentTags() {
+  const history = JSON.parse(localStorage.getItem(STORAGE.history) || '[]');
+  const container = document.getElementById('recentTags');
+  container.innerHTML = history.map(h =>
+    `<button class="recent-tag" data-kw="${h}">${h}</button>`
+  ).join('');
+  container.querySelectorAll('.recent-tag').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('searchInput').value = btn.dataset.kw;
+      doSearch();
+    });
+  });
+}
+
+// ─── TOAST ───────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── INIT & EVENTS ───────────────────────────────────────
+loadStorage();
+renderRecentTags();
+updateStats();
+updateNaverLinks();
+
+// Search
+document.getElementById('btnSearch').addEventListener('click', () => doSearch());
+document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+// Platform tabs
+document.getElementById('platformTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.tab');
+  if (!btn) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  state.activePlatform = btn.dataset.platform;
+  applyFilter();
+});
+
+// Sort
+document.getElementById('sortSelect').addEventListener('change', e => {
+  state.activeSort = e.target.value;
+  applyFilter();
+});
+
+// View toggle
+document.getElementById('viewCard').addEventListener('click', () => {
+  state.viewMode = 'card';
+  document.getElementById('viewCard').classList.add('active');
+  document.getElementById('viewNaver').classList.remove('active');
+  document.getElementById('cardListPanel').classList.remove('hidden');
+  document.getElementById('naverPanel').classList.remove('active');
+});
+document.getElementById('viewNaver').addEventListener('click', () => {
+  state.viewMode = 'naver';
+  document.getElementById('viewNaver').classList.add('active');
+  document.getElementById('viewCard').classList.remove('active');
+  document.getElementById('cardListPanel').classList.add('hidden');
+  document.getElementById('naverPanel').classList.add('active');
+  updateNaverLinks();
+});
+
+// Manual URL
+document.getElementById('btnManualAdd').addEventListener('click', addManualUrl);
+document.getElementById('manualUrl').addEventListener('keydown', e => { if (e.key === 'Enter') addManualUrl(); });
+</script>
+</body>
+</html>
