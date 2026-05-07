@@ -492,7 +492,7 @@ function renderCards(){
       +'<span style="color:#c0c0d0">'+d.createdAt+'</span>'
       +'</div>'
       +'<div class="c-btns">'
-      +(d.url&&!d.url.startsWith('company://')?'<button class="sb sb-open" onclick="event.stopPropagation();window.open(\''+esc(d.url)+'\',\'_blank\')">🌐 원본보기</button>':'')
+      +(d.url?'<button class="sb sb-open" onclick="event.stopPropagation();window.open(\''+esc(d.url)+'\',\'_blank\')">🌐 원본보기</button>':'')
       +(!d.sentAt?'<button class="sb" onclick="event.stopPropagation();markDone('+d.id+')">✅발송완료</button>':'')
       +'<button class="sb sb-del" onclick="event.stopPropagation();delItem('+d.id+')">삭제</button>'
       +'</div>'
@@ -807,11 +807,16 @@ function xlImport(){
     var rawUrl  =colUrl  ?String(row[colUrl]  ||'').trim():'';
     var rawEmail=colEmail?String(row[colEmail]||'').trim().toLowerCase():'';
     var rawInd  =colInd  ?String(row[colInd]  ||'').trim():'';
-    var url=rawUrl; if(url&&!url.startsWith('http')) url='https://'+url;
-    if(!url&&rawCo) url='company://'+rawCo.replace(/\s/g,'_')+'_'+Date.now()+'_'+i;
-    if(!url){ skipped++; return; }
-    if(existUrls[url]){ skipped++; return; }
-    existUrls[url]=true;
+
+    // 실제 URL 정규화
+    var realUrl=rawUrl;
+    if(realUrl&&!realUrl.startsWith('http')) realUrl='https://'+realUrl;
+
+    // 내부 중복 체크용 key (URL 없으면 회사명 기반)
+    var urlKey=realUrl||(rawCo?'company://'+rawCo.replace(/\s/g,'_')+'_'+Date.now()+'_'+i:'');
+    if(!urlKey){ skipped++; return; }
+    if(existUrls[urlKey]){ skipped++; return; }
+    existUrls[urlKey]=true;
     // 업종 자동 분류
     var indId='';
     if(rawInd){
@@ -822,7 +827,8 @@ function xlImport(){
       }
       if(!indId) indId='etc';
     }
-    DB.push(makeEntry({url:url,company:rawCo,email:rawEmail,ind:indId}));
+    // url: 실제 URL (있으면), 없으면 빈 문자열로 저장 (패널에서 직접 입력 가능)
+    DB.push(makeEntry({url:realUrl||'',company:rawCo,email:rawEmail,ind:indId,_key:urlKey}));
     added++;
   });
 
