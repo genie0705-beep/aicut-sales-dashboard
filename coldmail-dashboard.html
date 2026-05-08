@@ -48,6 +48,13 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
 .card.c-sel{border-color:#6c63ff;background:#fdfdff;box-shadow:0 2px 14px rgba(108,99,255,.15)}
 .card.c-done{opacity:.55;cursor:default;background:#fafafa}
 .card.c-sent{border-color:#10b981}
+.card.c-reply{border-color:#8b5cf6;background:#fdf8ff}
+
+/* BOOKMARK BAR */
+.bmark-bar{background:#f0efff;border-bottom:1px solid #ddd8ff;padding:6px 13px;font-size:11px;color:#555570;display:none;align-items:center;gap:6px;flex-shrink:0}
+.bmark-bar.show{display:flex}
+.bmark-bar b{color:#6c63ff}
+.bmark-x{margin-left:auto;color:#9898b0;cursor:pointer;font-size:10px;text-decoration:underline}
 
 .c-row1{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px}
 .c-name{font-size:13px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -56,16 +63,42 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
 .c-btns{display:flex;gap:5px;margin-top:8px}
 
 .badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;white-space:nowrap}
+.b-reply{background:#f3e8ff;color:#7c3aed}
 .b-hire{background:#fff1f1;color:#ef4444}
 .b-req{background:#f0efff;color:#6c63ff}
 .b-col{background:#ecfdf5;color:#10b981}
 .b-edu{background:#eff6ff;color:#3b82f6}
-.b-real{background:#fef9c3;color:#854d0e}
-.b-hosp{background:#fdf2f8;color:#9d174d}
-.b-med{background:#fff7ed;color:#9a3412}
 .b-done{background:#ecfdf5;color:#10b981}
 .b-wait{background:#f1f5f9;color:#64748b}
-.b-high{background:#fffbeb;color:#f59e0b}
+
+/* COLLECT TAB */
+.collect-wrap{display:none;flex-direction:column;height:calc(100vh - 56px);overflow-y:auto;padding:20px 24px;background:#f4f5f8}
+.collect-wrap.show{display:flex}
+.c-section{background:#fff;border-radius:12px;border:1px solid #e8e8f0;padding:18px 20px;margin-bottom:16px}
+.c-section h3{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.c-inp-row{display:flex;gap:8px;margin-bottom:10px}
+.c-inp{flex:1;padding:8px 11px;border:1.5px solid #e8e8f0;border-radius:8px;font-size:12px;color:#1a1a2e;outline:none;font-family:inherit}
+.c-inp:focus{border-color:#6c63ff}
+.c-btn{padding:8px 14px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.c-btn-search{background:#eff6ff;color:#2563eb;border:1.5px solid #bfdbfe}.c-btn-search:hover{background:#dbeafe}
+.c-btn-save{background:#6c63ff;color:#fff}.c-btn-save:hover{background:#5a52d5}
+.c-prog-wrap{margin-bottom:14px}
+.c-prog-label{display:flex;justify-content:space-between;font-size:11px;color:#555570;margin-bottom:5px}
+.c-prog-track{background:#e8e8f0;border-radius:4px;height:8px;overflow:hidden}
+.c-prog-fill{height:100%;background:linear-gradient(90deg,#5a52d5,#6c63ff);border-radius:4px;transition:width .4s}
+.c-today-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.c-stat-box{background:#f4f5f8;border-radius:8px;padding:10px 12px;text-align:center}
+.c-stat-box .val{font-family:monospace;font-size:18px;font-weight:700;color:#6c63ff}
+.c-stat-box .lbl{font-size:10px;color:#9898b0;margin-top:2px}
+.c-list-table{width:100%;border-collapse:collapse;font-size:12px}
+.c-list-table th{background:#f4f5f8;padding:7px 10px;text-align:left;font-size:10px;font-weight:700;color:#9898b0;text-transform:uppercase;letter-spacing:.5px}
+.c-list-table td{padding:7px 10px;border-bottom:1px solid #f0f0f8;vertical-align:middle}
+.c-list-table tr:last-child td{border-bottom:none}
+.c-list-table .c-inp{width:160px;padding:5px 8px}
+.log-table{width:100%;border-collapse:collapse;font-size:11px}
+.log-table th{background:#f4f5f8;padding:6px 10px;text-align:left;font-size:10px;font-weight:700;color:#9898b0}
+.log-table td{padding:6px 10px;border-bottom:1px solid #f0f0f8}
+.done-all{text-align:center;padding:20px;color:#10b981;font-size:14px;font-weight:700}
 .sb{font-size:10px;padding:3px 9px;border-radius:5px;border:1.5px solid #e8e8f0;background:#fff;color:#555570;cursor:pointer;font-weight:500;white-space:nowrap}
 .sb:hover{border-color:#6c63ff;color:#6c63ff}
 .sb-open{border-color:#3b82f6;color:#3b82f6;background:#eff6ff}.sb-open:hover{background:#dbeafe}
@@ -178,23 +211,35 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
     <div class="stat">⏳ 대기 <b id="sWait">0</b></div>
     <div class="stat">📧 메일완성 <b id="sMail">0</b></div>
     <div class="stat">✅ 발송완료 <b id="sDone">0</b></div>
+    <div class="stat">💬 응답 <b id="sReply">0</b></div>
   </div>
   <div class="hd-r">
+    <button class="btn" style="background:#fff;color:#f59e0b;border:1.5px solid #fcd34d" onclick="window.open('https://www.saramin.co.kr/zf_user/search/recruit?searchType=search&searchword=영상편집&recruitPage=1&recruitSort=relation&recruitPageCount=40&inner_com_type=&company_cd=0%2C1%2C2%2C3%2C4%2C5%2C6%2C7%2C9%2C10&directly_apply_able_yn=','_blank')">
+      📋 채용공고 수집
+    </button>
+    <button class="btn" style="background:#fff;color:#8b5cf6;border:1.5px solid #c4b5fd" onclick="swCollect()">
+      🔍 이메일 수집
+    </button>
     <button class="btn btn-g" onclick="xlOpen()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       엑셀 업로드
     </button>
-    <button class="btn btn-p" onclick="G('urlInp').focus()">
+    <button class="btn btn-p" onclick="swMain();G('urlInp').focus()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       링크 추가
     </button>
   </div>
 </header>
 
-<div class="layout">
+<div class="layout" id="mainLayout">
 
   <!-- LEFT: 링크 목록 -->
   <div class="left">
+    <!-- 북마크 바 -->
+    <div class="bmark-bar" id="bmarkBar">
+      🔖 지난번 여기까지: <b id="bmarkName"></b> <span id="bmarkNum" style="color:#9898b0"></span>
+      <span class="bmark-x" onclick="clearBmark()">초기화</span>
+    </div>
     <div class="url-row">
       <input class="url-inp" id="urlInp" type="url" placeholder="https://... 공고 링크 입력 후 엔터">
       <button class="url-go" id="urlGoBtn">추가</button>
@@ -204,6 +249,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
       <button class="ftab" onclick="setTab('대기',this)">대기</button>
       <button class="ftab" onclick="setTab('완성',this)">메일완성</button>
       <button class="ftab" onclick="setTab('발송',this)">발송완료</button>
+      <button class="ftab" onclick="setTab('응답',this)">💬 응답</button>
     </div>
     <div class="clist" id="clist">
       <div class="empty-s"><div class="ei">🔗</div><p>공고 링크를 추가하거나<br>엑셀을 업로드하세요</p></div>
@@ -221,6 +267,41 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
     </div>
   </div>
 
+</div>
+
+<!-- 이메일 수집 탭 -->
+<div class="collect-wrap" id="collectWrap">
+  <div class="c-section">
+    <h3>📊 오늘 수집 현황</h3>
+    <div class="c-today-stats">
+      <div class="c-stat-box"><div class="val" id="cTodayProc">0</div><div class="lbl">오늘 처리</div></div>
+      <div class="c-stat-box"><div class="val" id="cTodayFound">0</div><div class="lbl">이메일 발견</div></div>
+      <div class="c-stat-box"><div class="val" id="cTodayLeft">15</div><div class="lbl">남은 한도</div></div>
+    </div>
+    <div class="c-prog-wrap">
+      <div class="c-prog-label"><span id="cProgTx">0 / 15</span><span id="cProgPct">0%</span></div>
+      <div class="c-prog-track"><div class="c-prog-fill" id="cProgFill" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="c-section">
+    <h3>🔍 수동 이메일 수집</h3>
+    <div class="c-inp-row">
+      <input class="c-inp" id="cSearchCo" placeholder="회사명 입력 후 네이버 검색">
+      <button class="c-btn c-btn-search" onclick="cNaverSearch()">🔍 네이버 검색</button>
+    </div>
+    <div class="c-inp-row">
+      <input class="c-inp" id="cSearchEmail" type="email" placeholder="발견한 이메일 주소 입력">
+      <button class="c-btn c-btn-save" onclick="cSaveEmail()">💾 DB 저장</button>
+    </div>
+  </div>
+  <div class="c-section">
+    <h3>📋 오늘 수집 대기 목록 <span style="font-size:11px;font-weight:400;color:#9898b0">(이메일 없는 기업 최대 15개)</span></h3>
+    <div id="cWaitList"></div>
+  </div>
+  <div class="c-section">
+    <h3>📈 수집 로그</h3>
+    <div id="cLogWrap"></div>
+  </div>
 </div>
 
 <!-- EXCEL MODAL -->
@@ -311,16 +392,131 @@ var IND_KW={
 };
 
 // ─────────────────────────────────────
-// 메일 템플릿 — 업종/유형 무관 공통 사용
+// 메일 템플릿 — 업종별 5종 + 공통 기본
 // ─────────────────────────────────────
+
+// 업종 자동 매칭 키워드
+var IND_MAIL_KW = {
+  edu:   ['학원','교육','아카데미','스쿨','클래스','캠퍼스','강의','에듀','이러닝'],
+  real:  ['부동산','공인중개','분양','리얼티','주택'],
+  ecom:  ['쇼핑','몰','커머스','마켓','스토어','셀러','쇼핑몰'],
+  fran:  ['프랜차이즈','가맹','체인','외식','브랜드','본사'],
+  hosp:  ['병원','의원','클리닉','의료','한의원','치과','성형','헬스케어'],
+};
+
+function detectMailInd(item){
+  var text = ((item.ind||'') + ' ' + (item.company||'')).toLowerCase();
+  var keys = Object.keys(IND_MAIL_KW);
+  for(var i=0;i<keys.length;i++){
+    if(IND_MAIL_KW[keys[i]].some(function(k){return text.includes(k);})) return keys[i];
+  }
+  // ind 필드 직접 매칭
+  if(item.ind==='edu')  return 'edu';
+  if(item.ind==='real') return 'real';
+  if(item.ind==='ecom') return 'ecom';
+  if(item.ind==='fran') return 'fran';
+  if(item.ind==='hosp') return 'hosp';
+  return 'default';
+}
+
 function genMail(item){
-  var co   = item.company ? item.company+' 담당자님' : '담당자님';
+  var co   = item.company || '담당자';
   var memo = item.memo ? '\n\n'+item.memo : '';
+  var mailInd = detectMailInd(item);
 
-  var subj = '안녕하세요, 영상 편집 관련하여 제안드립니다 — 에이컷';
+  var subj='', body='';
 
-  var body =
-'안녕하세요, '+co+'\n\n'
+  if(mailInd==='edu'){
+    subj = co+' 강의 영상, 편집에 얼마나 걸리고 계세요?';
+    body =
+'안녕하세요, '+co+' 담당자님\n\n'
++'강의 콘텐츠를 인상깊게 봤습니다.\n\n'
++'말실수 컷, 자막 삽입, 챕터 구분, 썸네일까지\n'
++'반복되는 작업인데 매번 사람을 찾거나\n'
++'내부에서 처리하고 계시진 않으신가요?\n\n'
++'저희 에이컷은 교육 콘텐츠 전담 편집팀으로\n'
++'강의 영상 포맷을 한 번만 세팅하면\n'
++'이후 소스 전달 후 48시간 안에 완료됩니다.\n\n'
++'✅ 자막 스타일·인트로·아웃트로 고정 세팅\n'
++'✅ 월 대량 제작 할인 가능\n'
++'✅ 샘플 1편 무료 제작\n'
++memo+'\n\n'
++'현재 월 제작량이 어떻게 되시는지 알려주시면\n'
++'맞춤 견적 드리겠습니다.'
++FOOTER;
+
+  } else if(mailInd==='real'){
+    subj = co+' 매물 영상, 매번 새로 만들기 번거로우시죠?';
+    body =
+'안녕하세요, '+co+' 담당자님\n\n'
++'매물 영상 잘 보고 있습니다.\n\n'
++'매물이 바뀔 때마다 편집자 찾고, 소통하고,\n'
++'수정하는 과정이 생각보다 오래 걸리지 않으신가요?\n\n'
++'저희 에이컷은 부동산 영상 포맷을\n'
++'한 번 세팅해두면 소스만 보내주시면\n'
++'48시간 내 편집 완료해 드립니다.\n\n'
++'✅ 자막, BGM, 로고 삽입 포함\n'
++'✅ 수정 2회 기본 포함\n'
++'✅ 고정 계약 시 할인\n'
++memo+'\n\n'
++'한 달 무료 샘플 편집 제안드릴 수 있습니다.'
++FOOTER;
+
+  } else if(mailInd==='ecom'){
+    subj = co+' 신제품 영상, 매번 제작하기 부담되지 않으세요?';
+    body =
+'안녕하세요, '+co+' 담당자님\n\n'
++'제품 영상 인상깊게 봤습니다.\n\n'
++'신제품이 나올 때마다 촬영·편집·업로드까지\n'
++'내부에서 다 처리하기엔 한계가 있으시죠.\n\n'
++'저희 에이컷은 제품 숏폼 영상 전문 편집팀으로\n'
++'촬영본만 보내주시면 48시간 내 납품합니다.\n\n'
++'✅ 쿠팡·스마트스토어·릴스 포맷 모두 지원\n'
++'✅ 썸네일 제작 포함\n'
++'✅ 대량 패키지 별도 협의\n'
++memo+'\n\n'
++'현재 월 몇 편 정도 제작하시는지\n'
++'알려주시면 맞춤 패키지 제안드리겠습니다.'
++FOOTER;
+
+  } else if(mailInd==='fran'){
+    subj = co+' 시즌 영상, 매번 외주 맡기고 계신가요?';
+    body =
+'안녕하세요, '+co+' 담당자님\n\n'
++'마케팅 콘텐츠를 보고 연락드렸습니다.\n\n'
++'시즌마다 신메뉴·가맹모집·캠페인 영상이\n'
++'반복적으로 필요하시죠.\n\n'
++'저희 에이컷은 브랜드 가이드라인을 한 번 세팅하면\n'
++'이후 모든 영상에 자동으로 적용해서 납품합니다.\n\n'
++'✅ 브랜드 템플릿 고정 세팅 무료\n'
++'✅ 시즌 캠페인 영상 우선 처리\n'
++'✅ 샘플 1편 무료 제작\n'
++memo+'\n\n'
++'담당자분과 15분만 미팅 가능하신가요?'
++FOOTER;
+
+  } else if(mailInd==='hosp'){
+    subj = co+' 유튜브 영상, 매번 제작 부담되지 않으세요?';
+    body =
+'안녕하세요, '+co+' 담당자님\n\n'
++'유튜브 채널 잘 보고 있습니다.\n\n'
++'병원 유튜브는 꾸준히 올리는 것이 핵심인데\n'
++'매번 편집 비용과 시간이 부담되시진 않으신가요?\n\n'
++'저희 에이컷은 의료 콘텐츠 편집 전담팀으로\n'
++'촬영본만 보내주시면\n'
++'자막·챕터·인트로·썸네일까지 48시간 내 완성합니다.\n\n'
++'✅ 수정 2회 기본 포함\n'
++'✅ 정기 계약 시 추가 할인\n'
++'✅ 첫 1편 무료 샘플 제작\n'
++memo+'\n\n'
++'부담 없이 샘플 먼저 확인해 보세요.'
++FOOTER;
+
+  } else {
+    // 공통 기본 템플릿
+    subj = '안녕하세요, 영상 편집 관련하여 제안드립니다 — 에이컷';
+    body =
+'안녕하세요, '+co+' 담당자님\n\n'
 +'영상 편집 작업을 진행하고 계신 것을 보고 연락드립니다.\n\n'
 +'저희 에이컷은 영상 편집 전담팀 서비스로,\n'
 +'소스 파일만 전달해 주시면\n'
@@ -336,6 +532,7 @@ function genMail(item){
 +'결정하셔도 됩니다.\n\n'
 +'부담 없이 연락 주세요.'
 +FOOTER;
+  }
 
   return { subj: subj.trim(), body: body.trim() };
 }
@@ -371,6 +568,7 @@ var xlRows=[], xlHeaders=[];
   });
   if(dirty) saveDB();
   render();
+  loadBmark();
   G('urlInp').addEventListener('keydown', function(e){ if(e.key==='Enter') addLink(); });
   G('urlGoBtn').addEventListener('click', addLink);
 })();
@@ -425,6 +623,7 @@ function renderStats(){
   G('sWait').textContent  = DB.filter(function(d){return d.status==='wait';}).length;
   G('sMail').textContent  = DB.filter(function(d){return d.status==='ready';}).length;
   G('sDone').textContent  = DB.filter(function(d){return !!d.sentAt;}).length;
+  G('sReply').textContent = DB.filter(function(d){return d.status==='reply';}).length;
 }
 
 function renderCards(){
@@ -433,6 +632,7 @@ function renderCards(){
   if(curTab==='대기')  data=DB.filter(function(d){return d.status==='wait';});
   if(curTab==='완성')  data=DB.filter(function(d){return d.status==='ready';});
   if(curTab==='발송')  data=DB.filter(function(d){return !!d.sentAt;});
+  if(curTab==='응답')  data=DB.filter(function(d){return d.status==='reply';});
 
   if(!data.length){
     list.innerHTML='<div class="empty-s"><div class="ei">'+(DB.length?'🔍':'🔗')+'</div><p>'
@@ -445,9 +645,10 @@ function renderCards(){
     var indObj=INDS.find(function(x){return x.id===d.ind;});
     var typeObj=TYPES.find(function(x){return x.id===d.type;});
     var stBadge=d.sentAt?'<span class="badge b-done">✅발송완료</span>':
+                d.status==='reply'?'<span class="badge b-reply">💬 응답</span>':
                 d.status==='ready'?'<span class="badge" style="background:#f0efff;color:#6c63ff">📧메일완성</span>':
                 '<span class="badge b-wait">⏳대기</span>';
-    var cls='card'+(isSel?' c-sel':'')+(d.sentAt?' c-done':'')+(d.status==='ready'&&!d.sentAt?' c-sent':'');
+    var cls='card'+(isSel?' c-sel':'')+(d.sentAt?' c-done':'')+(d.status==='reply'?' c-reply':'')+(d.status==='ready'&&!d.sentAt?' c-sent':'');
 
     return '<div class="'+cls+'" id="c'+d.id+'" data-id="'+d.id+'">'
       +'<div class="c-row1">'
@@ -462,8 +663,8 @@ function renderCards(){
       +'<span style="color:#c0c0d0">'+d.createdAt+'</span>'
       +'</div>'
       +'<div class="c-btns">'
-      // URL이 실제 http 링크일 때만 원본보기 표시
       +(d.url&&d.url.startsWith('http')?'<button class="sb sb-open" onclick="event.stopPropagation();window.open(\''+esc(d.url)+'\',\'_blank\')">🌐 원본보기</button>':'')
+      +(d.status!=='reply'&&!d.sentAt?'<button class="sb" style="color:#7c3aed;border-color:#c4b5fd" onclick="event.stopPropagation();markReply('+d.id+')">💬 응답</button>':'')
       +(!d.sentAt?'<button class="sb" onclick="event.stopPropagation();markDone('+d.id+')">✅발송완료</button>':'')
       +'<button class="sb sb-del" onclick="event.stopPropagation();delItem('+d.id+')">삭제</button>'
       +'</div>'
@@ -663,11 +864,46 @@ function markDone(id){
   var idx=DB.findIndex(function(d){return d.id===id;}); if(idx<0) return;
   DB[idx].sentAt=new Date().toLocaleDateString('ko-KR');
   DB[idx].status='done';
+  // 북마크 저장 (발송완료 시)
+  var num=idx+1;
+  saveBmark(DB[idx].company||'(이름없음)', num);
   saveDB(); render(); toast('✅ 발송완료 처리됐습니다');
   var btn=G('btnDone');
   if(btn){ btn.textContent='✅ 발송완료 ('+DB[idx].sentAt+')'; btn.classList.add('already'); btn.onclick=null; }
   var card=G('c'+id);
   if(card){ card.classList.add('c-done'); card.classList.remove('c-sent'); }
+}
+
+function markReply(id){
+  var idx=DB.findIndex(function(d){return d.id===id;}); if(idx<0) return;
+  DB[idx].status='reply';
+  saveDB(); render(); toast('💬 응답 처리됐습니다');
+}
+
+// ─────────────────────────────────────
+// 북마크
+// ─────────────────────────────────────
+var SK_MARK='ac_cold4_mark';
+function saveBmark(name, num){
+  localStorage.setItem(SK_MARK, JSON.stringify({name:name, num:num}));
+  showBmark(name, num);
+}
+function loadBmark(){
+  try{
+    var s=localStorage.getItem(SK_MARK); if(!s) return;
+    var o=JSON.parse(s); showBmark(o.name, o.num);
+  }catch(e){}
+}
+function showBmark(name, num){
+  var bar=G('bmarkBar'); if(!bar) return;
+  bar.classList.add('show');
+  G('bmarkName').textContent=name;
+  G('bmarkNum').textContent='('+num+'번째)';
+}
+function clearBmark(){
+  localStorage.removeItem(SK_MARK);
+  var bar=G('bmarkBar'); if(bar) bar.classList.remove('show');
+  toast('북마크 초기화');
 }
 
 function openUrl(id){
@@ -693,6 +929,130 @@ function setTab(tab,btn){
   curTab=tab;
   document.querySelectorAll('.ftab').forEach(function(b){b.classList.remove('on');});
   btn.classList.add('on'); renderCards();
+}
+
+// ─────────────────────────────────────
+// 화면 전환
+// ─────────────────────────────────────
+function swMain(){
+  G('mainLayout').style.display='flex';
+  G('collectWrap').classList.remove('show');
+}
+function swCollect(){
+  G('mainLayout').style.display='none';
+  G('collectWrap').classList.add('show');
+  renderCollect();
+}
+
+// ─────────────────────────────────────
+// 이메일 수집 탭
+// ─────────────────────────────────────
+var SK_CLOG='ac_cold4_clog';
+var DAILY_LIMIT=15;
+
+function getTodayKey(){ return new Date().toLocaleDateString('ko-KR').replace(/\./g,'').replace(/ /g,''); }
+
+function loadCLog(){
+  try{ var s=localStorage.getItem(SK_CLOG); return s?JSON.parse(s):[]; }catch(e){ return []; }
+}
+function saveCLog(log){ try{ localStorage.setItem(SK_CLOG,JSON.stringify(log)); }catch(e){} }
+
+function getTodayStat(){
+  var log=loadCLog();
+  var today=getTodayKey();
+  var entry=log.find(function(l){return l.date===today;});
+  return entry||{date:today,proc:0,found:0};
+}
+function updateTodayStat(proc,found){
+  var log=loadCLog();
+  var today=getTodayKey();
+  var idx=log.findIndex(function(l){return l.date===today;});
+  if(idx>=0){ log[idx].proc+=proc; log[idx].found+=found; }
+  else log.unshift({date:today,proc:proc,found:found});
+  if(log.length>30) log=log.slice(0,30);
+  saveCLog(log);
+}
+
+function renderCollect(){
+  var stat=getTodayStat();
+  var left=Math.max(0,DAILY_LIMIT-stat.proc);
+  var pct=Math.min(100,Math.round(stat.proc/DAILY_LIMIT*100));
+  G('cTodayProc').textContent=stat.proc;
+  G('cTodayFound').textContent=stat.found;
+  G('cTodayLeft').textContent=left;
+  G('cProgTx').textContent=stat.proc+' / '+DAILY_LIMIT;
+  G('cProgPct').textContent=pct+'%';
+  G('cProgFill').style.width=pct+'%';
+
+  // 수집 대기 목록
+  var noEmail=DB.filter(function(d){return !d.email&&!d.sentAt;}).slice(0,DAILY_LIMIT);
+  var wl=G('cWaitList');
+  if(!noEmail.length){
+    wl.innerHTML='<div class="done-all">✅ 이메일 없는 기업이 없습니다!</div>';
+  } else if(stat.proc>=DAILY_LIMIT){
+    wl.innerHTML='<div class="done-all">✅ 오늘 수집 완료! ('+DAILY_LIMIT+'개 처리)</div>';
+  } else {
+    wl.innerHTML='<table class="c-list-table">'
+      +'<tr><th>회사명</th><th>검색</th><th>이메일 입력</th><th>저장</th></tr>'
+      +noEmail.map(function(d){
+        return '<tr>'
+          +'<td style="font-weight:600">'+esc(d.company||'(이름없음)')+'</td>'
+          +'<td><button class="c-btn c-btn-search" onclick="window.open(\'https://search.naver.com/search.naver?query='+encodeURIComponent((d.company||'')+' 이메일')+'\',\'_blank\')">🔍 검색</button></td>'
+          +'<td><input class="c-inp" id="ce_'+d.id+'" type="email" placeholder="이메일 입력"></td>'
+          +'<td><button class="c-btn c-btn-save" onclick="cSaveRow('+d.id+')">저장</button></td>'
+          +'</tr>';
+      }).join('')
+      +'</table>';
+  }
+
+  // 로그 테이블
+  var log=loadCLog();
+  var logWrap=G('cLogWrap');
+  if(!log.length){ logWrap.innerHTML='<div style="color:#9898b0;font-size:12px;padding:10px">수집 기록이 없습니다</div>'; return; }
+  logWrap.innerHTML='<table class="log-table">'
+    +'<tr><th>날짜</th><th>처리</th><th>발견</th><th>발견률</th></tr>'
+    +log.map(function(l){
+      var rate=l.proc>0?Math.round(l.found/l.proc*100):0;
+      return '<tr><td>'+esc(l.date)+'</td><td>'+l.proc+'</td><td>'+l.found+'</td><td>'+rate+'%</td></tr>';
+    }).join('')
+    +'</table>';
+}
+
+function cNaverSearch(){
+  var co=G('cSearchCo').value.trim();
+  if(!co){ toast('회사명을 입력해주세요'); return; }
+  window.open('https://search.naver.com/search.naver?query='+encodeURIComponent(co+' 이메일'),'_blank');
+}
+
+function cSaveEmail(){
+  var co=G('cSearchCo').value.trim();
+  var email=G('cSearchEmail').value.trim().toLowerCase();
+  if(!email||!email.includes('@')){ toast('올바른 이메일을 입력해주세요'); return; }
+  var idx=DB.findIndex(function(d){return d.company===co;});
+  var found=0;
+  if(idx>=0){
+    DB[idx].email=email; found=1;
+    toast('✅ '+co+' 이메일 저장됨: '+email);
+  } else {
+    // 새 항목으로 추가
+    DB.push(makeEntry({url:'',company:co,email:email}));
+    found=1;
+    toast('✅ 새 기업 추가 및 이메일 저장: '+co);
+  }
+  updateTodayStat(1,found);
+  saveDB(); render(); renderCollect();
+  G('cSearchCo').value=''; G('cSearchEmail').value='';
+}
+
+function cSaveRow(id){
+  var inp=G('ce_'+id); if(!inp) return;
+  var email=inp.value.trim().toLowerCase();
+  if(!email||!email.includes('@')){ toast('올바른 이메일을 입력해주세요'); return; }
+  var idx=DB.findIndex(function(d){return d.id===id;}); if(idx<0) return;
+  DB[idx].email=email;
+  updateTodayStat(1,1);
+  saveDB(); render(); renderCollect();
+  toast('✅ 이메일 저장됨: '+email);
 }
 
 // ─────────────────────────────────────
