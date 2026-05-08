@@ -292,7 +292,7 @@ var TYPES=[
   {id:'col',   emoji:'🤝', label:'협업형',  desc:'파트너 모집'},
 ];
 
-var FOOTER='\n\n───────────────────\nAICUT | AI 영상 편집 서비스\nmaster@aicut.co.kr | aicut.co.kr\n수신거부: 본 메일에 회신해 주세요.';
+var FOOTER='\n\n───────────────────\n✂️ AICUT | AI 영상 편집 전담팀\n\n📌 서비스 확인 → https://aicut.co.kr\n📧 문의 → master@aicut.co.kr\n\n수신거부를 원하시면 본 메일에 회신해 주세요.\n───────────────────';
 
 // 업종별 키워드 (엑셀 자동 분류용)
 var IND_KW={
@@ -399,10 +399,25 @@ var xlRows=[], xlHeaders=[];
 // ─────────────────────────────────────
 (function init(){
   loadDB();
-  // 기존 데이터 중 company:// 가상 URL → 빈 문자열로 정리
+  // company:// 가상 URL 정리
   var dirty=false;
   DB.forEach(function(d){
     if(d.url&&d.url.startsWith('company://')){ d.url=''; dirty=true; }
+    // 구버전 FOOTER 교체 (저장된 메일 본문에 남아있는 경우)
+    var oldFooters=[
+      '\n\n───────────────────\nAICUT | AI 영상 편집 서비스\nmaster@aicut.co.kr | aicut.co.kr\n수신거부: 본 메일에 회신해 주세요.',
+      '\n\n─────────────────\nAICUT | AI 영상 편집 서비스\nmaster@aicut.co.kr | aicut.co.kr\n수신거부: 본 메일에 회신해 주세요.',
+    ];
+    oldFooters.forEach(function(old){
+      if(d.mailBody&&d.mailBody.includes(old)){
+        d.mailBody=d.mailBody.replace(old, FOOTER); dirty=true;
+      }
+    });
+    // type+ind 있으면 항상 최신 genMail로 재생성
+    if(d.type&&d.ind){
+      var m=genMail(d);
+      d.mailSubj=m.subj; d.mailBody=m.body; dirty=true;
+    }
   });
   if(dirty) saveDB();
   render();
@@ -541,8 +556,8 @@ function showPanel(d){
     return '<button class="ind-btn'+(d.ind===x.id?' on':'')+'" onclick="setField('+d.id+',\'ind\',\''+x.id+'\',this)">'+x.label+'</button>';
   }).join('');
 
-  // 메일 미리보기
-  var mail=d.mailSubj?{subj:d.mailSubj,body:d.mailBody}:(d.type&&d.ind?genMail(d):{subj:'',body:''});
+  // 메일 미리보기 — 항상 최신 genMail()로 생성 (FOOTER 등 변경사항 즉시 반영)
+  var mail = (d.type && d.ind) ? genMail(d) : {subj: d.mailSubj||'', body: d.mailBody||''};
 
   rp.innerHTML=
     // 헤드
